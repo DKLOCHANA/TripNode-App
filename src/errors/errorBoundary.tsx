@@ -1,8 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { Typography } from '@/presentation/components/ui/Typography';
-import { Button } from '@/presentation/components/ui/Button';
-import { GlassContainer } from '@/presentation/components/ui/GlassContainer';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
@@ -32,11 +29,22 @@ export class ScreenErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error to console in development
-    console.error('ScreenErrorBoundary caught an error:', error, errorInfo);
+    // Log error details
+    console.error(
+      '%c[ERROR BOUNDARY]',
+      'color: red; font-weight: bold;',
+      {
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      }
+    );
 
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
+
+    // Log to external service can be added here later (Sentry, etc.)
+    // captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
   }
 
   handleRetry = (): void => {
@@ -50,35 +58,21 @@ export class ScreenErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI - using only basic React Native components (no dependencies on providers)
       return (
         <View style={styles.container}>
-          <GlassContainer style={styles.content}>
-            <Typography variant="title3" weight="bold" align="center">
-              Something went wrong
-            </Typography>
-            <Typography
-              variant="body"
-              color={colors.textSecondary}
-              align="center"
-              style={styles.message}
-            >
-              We encountered an unexpected error. Please try again.
-            </Typography>
+          <View style={styles.content}>
+            <Text style={styles.title}>Something went wrong</Text>
+            <Text style={styles.message}>We encountered an unexpected error. Please try again.</Text>
             {__DEV__ && this.state.error && (
               <View style={styles.errorDetails}>
-                <Typography variant="caption1" color={colors.error}>
-                  {this.state.error.message}
-                </Typography>
+                <Text style={styles.errorText}>{this.state.error.message}</Text>
               </View>
             )}
-            <Button
-              title="Try Again"
-              variant="primary"
-              onPress={this.handleRetry}
-              style={styles.button}
-            />
-          </GlassContainer>
+            <Pressable style={styles.button} onPress={this.handleRetry}>
+              <Text style={styles.buttonText}>Try Again</Text>
+            </Pressable>
+          </View>
         </View>
       );
     }
@@ -99,8 +93,21 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     alignItems: 'center',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.md,
+    backgroundColor: colors.backgroundSecondary,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
   },
   message: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
@@ -111,8 +118,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     width: '100%',
   },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+  },
   button: {
     minWidth: 140,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.electricBlue,
+    borderRadius: spacing.sm,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textAlign: 'center',
   },
 });
 

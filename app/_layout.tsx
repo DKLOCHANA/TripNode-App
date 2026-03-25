@@ -12,6 +12,7 @@ import { ScreenErrorBoundary } from '@/errors/errorBoundary';
 import { revenueCatService } from '@/services/revenueCatService';
 import { REVENUECAT } from '@/lib/constants';
 import { queryKeys } from '@/lib/queryKeys';
+import { shouldEnableRevenueCat, logEnvironmentInfo } from '@/lib/environment';
 
 function useAuthRedirect() {
   const { user, isHydrated, init } = useAuthStore();
@@ -20,11 +21,21 @@ function useAuthRedirect() {
   const previousUserId = useRef<string | null>(null);
   const isIdentifying = useRef(false); // Prevent concurrent identify calls
 
-  // Initialize RevenueCat SDK on app start
+  // Log environment info on first render
   useEffect(() => {
-    if (!revenueCatInitialized.current) {
-      revenueCatService.configure(REVENUECAT.API_KEY);
-      revenueCatInitialized.current = true;
+    logEnvironmentInfo();
+  }, []);
+
+  // Initialize RevenueCat SDK on app start (only if not in Expo Go)
+  useEffect(() => {
+    if (!revenueCatInitialized.current && shouldEnableRevenueCat()) {
+      try {
+        revenueCatService.configure(REVENUECAT.API_KEY);
+        revenueCatInitialized.current = true;
+      } catch (error) {
+        console.warn('[App] Failed to configure RevenueCat:', error);
+        revenueCatInitialized.current = false;
+      }
     }
   }, []);
 
@@ -36,45 +47,47 @@ function useAuthRedirect() {
   // Identify user with RevenueCat when user changes
   useEffect(() => {
     const identifyUser = async () => {
-      // Skip if already identifying or user hasn't changed
-      if (isIdentifying.current) return;
+      // Skip if already identifying, user hasn't changed, or RevenueCat not available
+      if (isIdentifying.current || !shouldEnableRevenueCat()) return;
       
       if (user && user.uid !== previousUserId.current) {
         isIdentifying.current = true;
         try {
-          await revenueCatService.identify(user.uid);
-          previousUserId.current = user.uid;
-          
-          // Check for expired subscription and show alert
-          const details = await revenueCatService.getSubscriptionDetails();
-          if (details.isExpired) {
-            Alert.alert(
-              'Subscription Expired',
-              'Your TripNode Premium subscription has expired. Renew now to continue enjoying premium features.',
-              [
-                { text: 'Later', style: 'cancel' },
-                { 
-                  text: 'Renew Now', 
-                  onPress: () => router.push('/paywall'),
-                },
-              ]
-            );
+          const result = await revenueCatService.identify(user.uid);
+          if (result) {
+            previousUserId.current = user.uid;
+            
+            // Check for expired subscription and show alert
+            const details = await revenueCatService.getSubscriptionDetails();
+            if (details.isExpired) {
+              Alert.alert(
+                'Subscription Expired',
+                'Your TripNode Premium subscription has expired. Renew now to continue enjoying premium features.',
+                [
+                  { text: 'Later', style: 'cancel' },
+                  { 
+                    text: 'Renew Now', 
+                    onPress: () => router.push('/paywall'),
+                  },
+                ]
+              );
+            }
           }
         } catch (error: any) {
           // Ignore rate limiting errors (code 7638) - not critical
           if (error?.info?.backendErrorCode !== 7638) {
-            console.warn('Failed to identify user with RevenueCat:', error);
+            console.warn('[App] Failed to identify user with RevenueCat:', error);
           }
         } finally {
           isIdentifying.current = false;
         }
-      } else if (!user && previousUserId.current) {
+      } else if (!user && previousUserId.current && shouldEnableRevenueCat()) {
         isIdentifying.current = true;
         try {
           await revenueCatService.logOut();
           previousUserId.current = null;
-        } catch {
-          // Silent fail
+        } catch (error) {
+          console.warn('[App] Failed to log out from RevenueCat:', error);
         } finally {
           isIdentifying.current = false;
         }
@@ -86,9 +99,9 @@ function useAuthRedirect() {
     }
   }, [user, isHydrated]);
 
-  // Set up customer info update listener
+  // Set up customer info update listener (only if RevenueCat is available)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !shouldEnableRevenueCat()) return;
 
     const unsubscribe = revenueCatService.addCustomerInfoUpdateListener((customerInfo) => {
       // Invalidate subscription query when customer info updates
@@ -162,17 +175,17 @@ function ThemedGestureRoot({ children }: { children: ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <ThemedGestureRoot>
-            <ScreenErrorBoundary>
+    <ScreenErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <ThemedGestureRoot>
               <RootLayoutContent />
-            </ScreenErrorBoundary>
-          </ThemedGestureRoot>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+            </ThemedGestureRoot>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </ScreenErrorBoundary>
   );
 }
 

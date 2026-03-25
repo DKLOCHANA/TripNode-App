@@ -1,5 +1,7 @@
+import { EXPO_PUBLIC_REVENUECAT_API_KEY } from '@env';
+
 export const REVENUECAT = {
-  API_KEY: 'test_qRyiYuSrhIVefbeGbWhSBppCZWW',
+  API_KEY: EXPO_PUBLIC_REVENUECAT_API_KEY,
   ENTITLEMENT_PRO: 'TripNode Premium',
   PACKAGE_ANNUAL: '$rc_annual',
   PACKAGE_MONTHLY: '$rc_monthly',

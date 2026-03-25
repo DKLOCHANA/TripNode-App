@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { View, ActivityIndicator } from 'react-native';
 import { darkColors, lightColors } from './colors';
 
 type ThemeMode = 'dark' | 'light';
@@ -76,9 +77,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setTheme,
   };
 
-  // Don't render children until theme is loaded to prevent flash
+  // Show loading view while theme is being loaded (instead of returning null)
+  // This prevents white screen on app startup
   if (!isLoaded) {
-    return null;
+    return (
+      <View style={{ flex: 1, backgroundColor: darkColors.backgroundPrimary }}>
+        <ActivityIndicator size="large" color={darkColors.electricBlue} style={{ flex: 1 }} />
+      </View>
+    );
   }
 
   return (

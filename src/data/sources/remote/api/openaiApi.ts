@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OPENAI_API_KEY } from '@env';
+import { EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY } from '@env';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -85,7 +85,7 @@ export async function generateAttractionSuggestions(
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY}`,
       },
     }
   );
@@ -136,7 +136,7 @@ export async function generateItinerary(
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY}`,
       },
     }
   );

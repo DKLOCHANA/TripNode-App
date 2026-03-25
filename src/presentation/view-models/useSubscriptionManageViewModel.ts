@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { useHaptic } from '@/hooks/useHaptic';
 import { revenueCatService } from '@/services/revenueCatService';
+import { REVENUECAT } from '@/lib/constants';
 import { queryKeys } from '@/lib/queryKeys';
 import { checkNetworkAndAlert } from '@/lib/network';
 
@@ -159,7 +160,8 @@ export function useSubscriptionManageViewModel() {
         });
       }
 
-      const isProNow = customerInfo.entitlements.active['TripNode Premium'] !== undefined;
+      // Check if customer info exists and has the entitlement
+      const isProNow = customerInfo?.entitlements.active[REVENUECAT.ENTITLEMENT_PRO] !== undefined;
       
       if (isProNow) {
         haptic.success();

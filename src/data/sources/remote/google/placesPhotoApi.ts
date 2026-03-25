@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { GOOGLE_PLACES_API_KEY } from '@env';
+import { EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY } from '@env';
 
 const PLACES_BASE = 'https://places.googleapis.com/v1';
 
@@ -33,7 +33,7 @@ export async function getPlacePhotoUri(placeId: string): Promise<string | null> 
           fields: 'photos',
         },
         headers: {
-          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-Api-Key': EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
           'X-Goog-FieldMask': 'photos',
         },
       }
@@ -51,7 +51,7 @@ export async function getPlacePhotoUri(placeId: string): Promise<string | null> 
           maxWidthPx: 960,
           maxHeightPx: 540,
           skipHttpRedirect: true,
-          key: GOOGLE_PLACES_API_KEY,
+          key: EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
         },
       }
     );
@@ -61,7 +61,7 @@ export async function getPlacePhotoUri(placeId: string): Promise<string | null> 
     }
 
     return `${PLACES_BASE}/${firstPhoto.name}/media?maxWidthPx=960&maxHeightPx=540&key=${encodeURIComponent(
-      GOOGLE_PLACES_API_KEY
+      EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY
     )}`;
   } catch {
     return null;
@@ -80,7 +80,7 @@ export async function searchPlaceAndGetPhoto(query: string): Promise<string | nu
       },
       {
         headers: {
-          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-Api-Key': EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
           'X-Goog-FieldMask': 'places.id,places.photos',
           'Content-Type': 'application/json',
         },
@@ -101,7 +101,7 @@ export async function searchPlaceAndGetPhoto(query: string): Promise<string | nu
           maxWidthPx: 400,
           maxHeightPx: 300,
           skipHttpRedirect: true,
-          key: GOOGLE_PLACES_API_KEY,
+          key: EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
         },
       }
     );
@@ -111,7 +111,7 @@ export async function searchPlaceAndGetPhoto(query: string): Promise<string | nu
     }
 
     return `${PLACES_BASE}/${firstPhoto.name}/media?maxWidthPx=400&maxHeightPx=300&key=${encodeURIComponent(
-      GOOGLE_PLACES_API_KEY
+      EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY
     )}`;
   } catch {
     return null;

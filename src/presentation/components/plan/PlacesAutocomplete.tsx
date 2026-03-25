@@ -2,7 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { StyleSheet, View, Keyboard } from 'react-native';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import { Ionicons } from '@expo/vector-icons';
-import { GOOGLE_PLACES_API_KEY } from '@env';
+import { EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY } from '@env';
 import { useTheme } from '@/theme/ThemeContext';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
@@ -51,7 +51,7 @@ export function PlacesAutocomplete({
         fetchDetails
         onPress={handlePress}
         query={{
-          key: GOOGLE_PLACES_API_KEY,
+          key: EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
           language: 'en',
           types: '(cities)',
         }}

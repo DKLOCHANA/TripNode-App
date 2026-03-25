@@ -155,51 +155,78 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   init: () => {
+    // Set a timeout to ensure isHydrated is set even if Firebase is slow
+    const hydrationTimeout = setTimeout(() => {
+      set((state) => {
+        // Only set isHydrated if it's still false (hasn't been set by Firebase yet)
+        if (!state.isHydrated) {
+          console.warn('Auth hydration timeout - setting isHydrated to prevent infinite loading');
+          return { isHydrated: true };
+        }
+        return state;
+      });
+    }, 5000); // 5 second timeout for hydration
+
     // First, try to load user from secure storage (for instant startup)
-    SecureStoreService.getUser().then((storedUser) => {
-      if (storedUser) {
-        set({
-          user: {
-            uid: storedUser.uid,
-            email: storedUser.email,
-            displayName: storedUser.displayName,
-            photoURL: storedUser.photoURL,
-          },
-        });
-      }
-    });
+    SecureStoreService.getUser()
+      .then((storedUser) => {
+        if (storedUser) {
+          set({
+            user: {
+              uid: storedUser.uid,
+              email: storedUser.email,
+              displayName: storedUser.displayName,
+              photoURL: storedUser.photoURL,
+            },
+          });
+        }
+      })
+      .catch((error) => {
+        console.warn('Failed to load stored user:', error);
+      });
 
     // Then subscribe to Firebase auth state for real-time updates
     const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
-      if (firebaseUser) {
-        const appUser = toAppUser(firebaseUser);
+      try {
+        if (firebaseUser) {
+          const appUser = toAppUser(firebaseUser);
 
-        // Update stored user data
-        await SecureStoreService.setUser({
-          uid: appUser.uid,
-          email: appUser.email,
-          displayName: appUser.displayName,
-          photoURL: appUser.photoURL,
-        });
+          // Update stored user data
+          await SecureStoreService.setUser({
+            uid: appUser.uid,
+            email: appUser.email,
+            displayName: appUser.displayName,
+            photoURL: appUser.photoURL,
+          });
 
-        // Refresh token
-        const token = await firebaseUser.getIdToken();
-        await SecureStoreService.setToken(token);
+          // Refresh token
+          const token = await firebaseUser.getIdToken();
+          await SecureStoreService.setToken(token);
 
-        set({ user: appUser, isHydrated: true, loading: false });
-      } else {
-        // User signed out or no user
-        // Only clear if we don't have stored user (handles offline case)
-        const storedUser = await SecureStoreService.getUser();
-        if (!storedUser) {
-          set({ user: null, isHydrated: true, loading: false });
+          set({ user: appUser, isHydrated: true, loading: false });
         } else {
-          // Keep stored user for offline access, but mark as hydrated
-          set({ isHydrated: true, loading: false });
+          // User signed out or no user
+          // Only clear if we don't have stored user (handles offline case)
+          const storedUser = await SecureStoreService.getUser();
+          if (!storedUser) {
+            set({ user: null, isHydrated: true, loading: false });
+          } else {
+            // Keep stored user for offline access, but mark as hydrated
+            set({ isHydrated: true, loading: false });
+          }
         }
+      } catch (error) {
+        console.warn('Error during auth state update:', error);
+        // Ensure we're marked as hydrated even on error
+        set({ isHydrated: true, loading: false });
+      } finally {
+        clearTimeout(hydrationTimeout);
       }
     });
 
-    return unsubscribe;
+    return () => {
+      clearTimeout(hydrationTimeout);
+      unsubscribe();
+    };
   },
 }));

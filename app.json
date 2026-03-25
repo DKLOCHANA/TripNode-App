@@ -13,17 +13,23 @@
       "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.tripnode.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "We need your location to help you find places for your trips",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to help you find places for your trips"
+      },
+      "buildNumber": "1",
+      "appleTeamId": "CLNUVH5GRA"
     },
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-image",
       "expo-apple-authentication",
+      "expo-splash-screen",
       "@react-native-community/datetimepicker"
     ],
     "extra": {
@@ -32,6 +38,9 @@
         "projectId": "4d1959ce-7965-4052-9664-75f7533cf213"
       }
     },
-    "owner": "lochanaclaudedevs-organization"
+    "owner": "lochanaclaudedevs-organization",
+    "android": {
+      "package": "com.tripnode.app"
+    }
   }
 }
