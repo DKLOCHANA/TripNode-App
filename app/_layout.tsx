@@ -28,14 +28,30 @@ function useAuthRedirect() {
 
   // Initialize RevenueCat SDK on app start (only if not in Expo Go)
   useEffect(() => {
+    console.log('[App] 🚀 RevenueCat initialization check...');
+    console.log('[App] 🔑 Production API_KEY exists:', !!REVENUECAT.API_KEY);
+    console.log('[App] 🔑 Test API_KEY exists:', !!REVENUECAT.TEST_API_KEY);
+    console.log('[App] ✅ shouldEnableRevenueCat():', shouldEnableRevenueCat());
+    console.log('[App] ✅ Already initialized:', revenueCatInitialized.current);
+    
     if (!revenueCatInitialized.current && shouldEnableRevenueCat()) {
+      console.log('[App] 🚀 Configuring RevenueCat...');
       try {
-        revenueCatService.configure(REVENUECAT.API_KEY);
+        if (!REVENUECAT.API_KEY) {
+          console.error('[App] ❌ RevenueCat API key is undefined!');
+          return;
+        }
+        // Pass both production and test keys - service will try production first,
+        // fall back to test key if native store is unavailable
+        revenueCatService.configure(REVENUECAT.API_KEY, REVENUECAT.TEST_API_KEY);
         revenueCatInitialized.current = true;
+        console.log('[App] ✅ RevenueCat initialization completed');
       } catch (error) {
-        console.warn('[App] Failed to configure RevenueCat:', error);
+        console.error('[App] ❌ Failed to configure RevenueCat:', error);
         revenueCatInitialized.current = false;
       }
+    } else {
+      console.log('[App] ⏭️ Skipping RevenueCat initialization');
     }
   }, []);
 
@@ -47,19 +63,34 @@ function useAuthRedirect() {
   // Identify user with RevenueCat when user changes
   useEffect(() => {
     const identifyUser = async () => {
+      console.log('[App] 👤 identifyUser check...');
+      console.log('[App] 👤 isIdentifying:', isIdentifying.current);
+      console.log('[App] 👤 shouldEnableRevenueCat:', shouldEnableRevenueCat());
+      console.log('[App] 👤 user exists:', !!user);
+      console.log('[App] 👤 previousUserId:', previousUserId.current);
+      
       // Skip if already identifying, user hasn't changed, or RevenueCat not available
-      if (isIdentifying.current || !shouldEnableRevenueCat()) return;
+      if (isIdentifying.current || !shouldEnableRevenueCat()) {
+        console.log('[App] ⏭️ Skipping user identification');
+        return;
+      }
       
       if (user && user.uid !== previousUserId.current) {
+        console.log('[App] 👤 Identifying user:', user.uid);
         isIdentifying.current = true;
         try {
           const result = await revenueCatService.identify(user.uid);
           if (result) {
             previousUserId.current = user.uid;
+            console.log('[App] ✅ User identified successfully');
             
             // Check for expired subscription and show alert
+            console.log('[App] 🔍 Checking subscription details...');
             const details = await revenueCatService.getSubscriptionDetails();
+            console.log('[App] 📊 Subscription details:', details);
+            
             if (details.isExpired) {
+              console.log('[App] ⚠️ Subscription expired - showing alert');
               Alert.alert(
                 'Subscription Expired',
                 'Your TripNode Premium subscription has expired. Renew now to continue enjoying premium features.',
@@ -76,18 +107,22 @@ function useAuthRedirect() {
         } catch (error: any) {
           // Ignore rate limiting errors (code 7638) - not critical
           if (error?.info?.backendErrorCode !== 7638) {
-            console.warn('[App] Failed to identify user with RevenueCat:', error);
+            console.error('[App] ❌ Failed to identify user with RevenueCat:', error);
+          } else {
+            console.log('[App] ⚠️ Rate limiting error - ignoring');
           }
         } finally {
           isIdentifying.current = false;
         }
       } else if (!user && previousUserId.current && shouldEnableRevenueCat()) {
+        console.log('[App] 👤 Logging out user from RevenueCat');
         isIdentifying.current = true;
         try {
           await revenueCatService.logOut();
           previousUserId.current = null;
+          console.log('[App] ✅ User logged out successfully');
         } catch (error) {
-          console.warn('[App] Failed to log out from RevenueCat:', error);
+          console.error('[App] ❌ Failed to log out from RevenueCat:', error);
         } finally {
           isIdentifying.current = false;
         }

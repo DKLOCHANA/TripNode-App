@@ -9,5 +9,6 @@ declare module '@env' {
   export const EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY: string;
   export const EXPO_PUBLIC_API_BASE_URL: string;
   export const EXPO_PUBLIC_REVENUECAT_API_KEY: string;
+  export const EXPO_PUBLIC_REVENUECAT_TEST_API_KEY: string;
   export const EXPO_PUBLIC_APP_ENV: string;
 }

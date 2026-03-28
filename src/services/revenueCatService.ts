@@ -28,22 +28,35 @@ let isRevenueCatConfigured = false;
 export const revenueCatService = {
   /**
    * Initialize RevenueCat SDK
-   * Safely skipped in Expo Go
+   * Uses test key in __DEV__ mode, production key in production builds
    */
-  configure: (apiKey: string): void => {
+  configure: (productionApiKey: string, testApiKey?: string): void => {
+    // In development mode, use test key to avoid native store errors on simulator
+    // In production mode, use production key for real App Store purchases
+    const useTestKey = __DEV__ && !!testApiKey;
+    const apiKey = useTestKey ? testApiKey : productionApiKey;
+    
+    console.log('[RevenueCat] 🔧 configure() called');
+    console.log('[RevenueCat] 🔧 __DEV__:', __DEV__);
+    console.log('[RevenueCat] 🔧 Using test key:', useTestKey);
+    console.log('[RevenueCat] 🔧 API key prefix:', apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined');
+    
     // Don't configure in Expo Go - it's not supported
     if (!shouldEnableRevenueCat()) {
-      console.info('[RevenueCat] Skipping configuration - not available in Expo Go');
+      console.info('[RevenueCat] ⚠️ Skipping configuration - not available in Expo Go');
       return;
     }
 
     try {
+      console.log('[RevenueCat] 📝 Setting log level to:', __DEV__ ? 'DEBUG' : 'INFO');
       Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.INFO);
+      
+      console.log('[RevenueCat] 🚀 Calling Purchases.configure()...');
       Purchases.configure({ apiKey });
       isRevenueCatConfigured = true;
-      console.info('[RevenueCat] Successfully configured');
-    } catch (error) {
-      console.warn('[RevenueCat] Failed to configure:', error);
+      console.info('[RevenueCat] ✅ Successfully configured' + (useTestKey ? ' (Test Store mode)' : ' (Production mode)'));
+    } catch (error: any) {
+      console.error('[RevenueCat] ❌ Failed to configure:', error);
       isRevenueCatConfigured = false;
     }
   },
@@ -59,16 +72,26 @@ export const revenueCatService = {
    * Identify user for subscription tracking
    */
   identify: async (userId: string): Promise<CustomerInfo | null> => {
+    console.log('[RevenueCat] 👤 identify() called with userId:', userId);
+    
     if (!isRevenueCatConfigured) {
-      console.warn('[RevenueCat] identify: RevenueCat not configured (expected in Expo Go)');
+      console.warn('[RevenueCat] ⚠️ identify: RevenueCat not configured (expected in Expo Go)');
       return null;
     }
 
     try {
+      console.log('[RevenueCat] 👤 Logging in user...');
       const { customerInfo } = await Purchases.logIn(userId);
+      
+      console.log('[RevenueCat] ✅ User identified successfully');
+      console.log('[RevenueCat] 👤 Customer info:', {
+        originalAppUserId: customerInfo.originalAppUserId,
+        activeSubscriptions: customerInfo.activeSubscriptions,
+      });
+      
       return customerInfo;
     } catch (error) {
-      console.warn('[RevenueCat] identify error:', error);
+      console.error('[RevenueCat] ❌ identify error:', error);
       return null;
     }
   },
@@ -171,12 +194,27 @@ export const revenueCatService = {
    * Get all offerings
    */
   getOfferings: async (): Promise<PurchasesOfferings | null> => {
-    if (!isRevenueCatConfigured) return null;
+    console.log('[RevenueCat] 🎁 getOfferings() called');
+    
+    if (!isRevenueCatConfigured) {
+      console.warn('[RevenueCat] ⚠️ getOfferings: RevenueCat not configured');
+      return null;
+    }
 
     try {
-      return await Purchases.getOfferings();
+      console.log('[RevenueCat] 🔍 Fetching all offerings...');
+      const offerings = await Purchases.getOfferings();
+      
+      console.log('[RevenueCat] 🎁 Offerings fetched:', {
+        currentOfferingId: offerings.current?.identifier,
+        totalOfferings: Object.keys(offerings.all).length,
+        offeringIds: Object.keys(offerings.all),
+      });
+      
+      return offerings;
     } catch (error) {
-      console.warn('[RevenueCat] getOfferings error:', error);
+      console.error('[RevenueCat] ❌ getOfferings error:', error);
+      console.error('[RevenueCat] ❌ Error details:', JSON.stringify(error, null, 2));
       return null;
     }
   },
@@ -185,13 +223,48 @@ export const revenueCatService = {
    * Get available packages for purchase
    */
   getPackages: async (): Promise<PurchasesPackage[]> => {
-    if (!isRevenueCatConfigured) return [];
+    console.log('[RevenueCat] 📦 getPackages() called');
+    console.log('[RevenueCat] 📦 isRevenueCatConfigured:', isRevenueCatConfigured);
+    
+    if (!isRevenueCatConfigured) {
+      console.warn('[RevenueCat] ⚠️ getPackages: RevenueCat not configured');
+      return [];
+    }
 
     try {
+      console.log('[RevenueCat] 🔍 Fetching offerings from RevenueCat...');
       const offerings = await Purchases.getOfferings();
-      return offerings.current?.availablePackages ?? [];
+      
+      console.log('[RevenueCat] 📦 Offerings received:', {
+        current: offerings.current?.identifier,
+        allOfferingsCount: Object.keys(offerings.all).length,
+        allOfferingIds: Object.keys(offerings.all),
+      });
+      
+      const packages = offerings.current?.availablePackages ?? [];
+      console.log('[RevenueCat] 📦 Available packages count:', packages.length);
+      
+      if (packages.length === 0) {
+        console.warn('[RevenueCat] ⚠️ No packages available in current offering!');
+        console.log('[RevenueCat] 📦 Current offering details:', offerings.current);
+      } else {
+        packages.forEach((pkg, index) => {
+          console.log(`[RevenueCat] 📦 Package ${index + 1}:`, {
+            identifier: pkg.identifier,
+            packageType: pkg.packageType,
+            productId: pkg.product.identifier,
+            productTitle: pkg.product.title,
+            price: pkg.product.priceString,
+            priceAmount: pkg.product.price,
+            currencyCode: pkg.product.currencyCode,
+          });
+        });
+      }
+      
+      return packages;
     } catch (error) {
-      console.warn('[RevenueCat] getPackages error:', error);
+      console.error('[RevenueCat] ❌ getPackages error:', error);
+      console.error('[RevenueCat] ❌ Error details:', JSON.stringify(error, null, 2));
       return [];
     }
   },
@@ -218,14 +291,45 @@ export const revenueCatService = {
    * Purchase a subscription package
    */
   purchasePackage: async (pkg: PurchasesPackage): Promise<CustomerInfo | null> => {
-    if (!isRevenueCatConfigured) return null;
+    console.log('[RevenueCat] 💳 purchasePackage() called');
+    console.log('[RevenueCat] 💳 Package details:', {
+      identifier: pkg?.identifier,
+      packageType: pkg?.packageType,
+      productId: pkg?.product?.identifier,
+      productTitle: pkg?.product?.title,
+      price: pkg?.product?.priceString,
+    });
+    
+    if (!isRevenueCatConfigured) {
+      console.error('[RevenueCat] ❌ purchasePackage: RevenueCat not configured!');
+      return null;
+    }
 
     try {
+      console.log('[RevenueCat] 💳 Initiating purchase...');
       const { customerInfo } = await Purchases.purchasePackage(pkg);
+      
+      console.log('[RevenueCat] ✅ Purchase successful!');
+      console.log('[RevenueCat] 💳 Customer info:', {
+        originalAppUserId: customerInfo.originalAppUserId,
+        activeSubscriptions: customerInfo.activeSubscriptions,
+        entitlements: Object.keys(customerInfo.entitlements.active),
+      });
+      
       return customerInfo;
-    } catch (error) {
-      console.warn('[RevenueCat] purchasePackage error:', error);
-      return null;
+    } catch (error: any) {
+      // In dev mode with test store, test failures are expected
+      const isTestStoreError = __DEV__ && error?.code === '5' && error?.message?.includes('Test purchase');
+      
+      if (isTestStoreError) {
+        console.warn('[RevenueCat] ⚠️ Test Store purchase simulation:', error?.message);
+      } else {
+        console.error('[RevenueCat] ❌ purchasePackage error:', error);
+        console.error('[RevenueCat] ❌ Error code:', error?.code);
+        console.error('[RevenueCat] ❌ Error message:', error?.message);
+        console.error('[RevenueCat] ❌ User cancelled:', error?.userCancelled);
+      }
+      throw error;
     }
   },
 

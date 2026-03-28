@@ -5,13 +5,17 @@ import Constants from 'expo-constants';
  * Expo Go does not support native modules like RevenueCat
  */
 export function isExpoGoApp(): boolean {
-  return (
-    Constants.appOwnership === 'expo' ||
-    !Constants.expoConfig?.plugins?.some((plugin: any) =>
-      plugin === 'expo-build-properties' || 
-      (Array.isArray(plugin) && plugin[0] === 'expo-build-properties')
-    )
-  );
+  // More reliable detection: Expo Go always has appOwnership === 'expo'
+  // Development builds and production builds have appOwnership === null or undefined
+  const isExpoGo = Constants.appOwnership === 'expo';
+  
+  console.log('[Environment] 🔍 isExpoGoApp check:', {
+    appOwnership: Constants.appOwnership,
+    executionEnvironment: Constants.executionEnvironment,
+    isExpoGo,
+  });
+  
+  return isExpoGo;
 }
 
 /**
@@ -27,7 +31,15 @@ export function isProduction(): boolean {
  * - Enabled in development builds and production
  */
 export function shouldEnableRevenueCat(): boolean {
-  return !isExpoGoApp();
+  const isExpoGo = isExpoGoApp();
+  const shouldEnable = !isExpoGo;
+  
+  console.log('[Environment] 🔧 shouldEnableRevenueCat:', {
+    isExpoGo,
+    shouldEnable,
+  });
+  
+  return shouldEnable;
 }
 
 /**
@@ -39,6 +51,7 @@ export function logEnvironmentInfo(): void {
     isProduction: isProduction(),
     shouldEnableRevenueCat: shouldEnableRevenueCat(),
     appOwnership: Constants.appOwnership,
+    executionEnvironment: Constants.executionEnvironment,
     buildNumber: Constants.expoConfig?.version,
   });
 }

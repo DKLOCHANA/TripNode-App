@@ -11,7 +11,9 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "development"
+        "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_REVENUECAT_API_KEY": "appl_KwVJchfbaTaINTdruFmHYjPKHpC",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "test_qRyiYuSrhIVefbeGbWhSBppCZWW"
       }
     },
     "preview": {
@@ -20,7 +22,9 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "preview"
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_REVENUECAT_API_KEY": "appl_KwVJchfbaTaINTdruFmHYjPKHpC",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "test_qRyiYuSrhIVefbeGbWhSBppCZWW"
       }
     },
     "production": {
@@ -28,7 +32,9 @@
       "autoIncrement": true,
       "environment": "production",
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "production"
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_REVENUECAT_API_KEY": "appl_KwVJchfbaTaINTdruFmHYjPKHpC",
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "test_qRyiYuSrhIVefbeGbWhSBppCZWW"
       }
     }
   },
