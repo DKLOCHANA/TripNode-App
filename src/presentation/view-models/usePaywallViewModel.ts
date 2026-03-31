@@ -174,6 +174,16 @@ export function usePaywallViewModel() {
         console.warn('[PaywallVM] ⚠️ Purchase completed but Pro entitlement not found');
       }
     } catch (error: any) {
+      const isUserCancelled =
+        error?.userCancelled === true ||
+        error?.code === 'PURCHASE_CANCELLED' ||
+        String(error?.code) === '1';
+
+      if (isUserCancelled) {
+        console.log('[PaywallVM] ℹ️ User cancelled purchase');
+        return;
+      }
+
       const isTestStoreError = __DEV__ && error?.code === '5' && error?.message?.includes('Test purchase');
       
       if (isTestStoreError) {
@@ -191,13 +201,6 @@ export function usePaywallViewModel() {
       console.error('[PaywallVM] ❌ Error code:', error?.code);
       console.error('[PaywallVM] ❌ Error message:', error?.message);
       console.error('[PaywallVM] ❌ User cancelled:', error?.userCancelled);
-      
-      // Check if user cancelled
-      if (error?.userCancelled || error?.code === 'PURCHASE_CANCELLED') {
-        console.log('[PaywallVM] ℹ️ User cancelled purchase');
-        // User cancelled, do nothing
-        return;
-      }
       
       haptic.error();
       Alert.alert(
