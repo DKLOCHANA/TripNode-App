@@ -7,6 +7,7 @@ import { useTripGenerationStore } from '@/store/tripGenerationStore';
 import { useUIStore } from '@/store/uiStore';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useSaveTrip } from '@/hooks/useSaveTrip';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { useAuthStore } from '@/store/authStore';
 import { createLocation } from '@/domain/value-objects/Location';
 import { sanitizeDestination, sanitizeBudget } from '@/lib/sanitize';
@@ -38,6 +39,7 @@ export function usePlanTripViewModel() {
   const haptic = useHaptic();
   const user = useAuthStore((s) => s.user);
   const saveTripMutation = useSaveTrip(user?.uid);
+  const subscription = useSubscriptionStatus();
 
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -176,6 +178,8 @@ export function usePlanTripViewModel() {
       return;
     }
 
+    if (!subscription.checkAndGate()) return;
+
     if (!validateForm()) {
       haptic.error();
       return;
@@ -217,7 +221,7 @@ export function usePlanTripViewModel() {
       haptic.error();
       Alert.alert('Error', 'Failed to generate trip suggestions. Please check your internet connection and try again.');
     }
-  }, [store, validateForm, haptic, genStore]);
+  }, [store, validateForm, haptic, genStore, subscription]);
 
   // Handle attraction toggle
   const handleToggleAttraction = useCallback((id: string) => {

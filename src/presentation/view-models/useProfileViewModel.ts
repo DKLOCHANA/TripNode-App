@@ -316,7 +316,7 @@ export function useProfileViewModel() {
   }, []);
 
   const handleTermsOfService = useCallback(() => {
-    Linking.openURL('https://dklochana.github.io/TripNode/terms-of-service/').catch(() => {
+    Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/').catch(() => {
       Alert.alert('Error', 'Unable to open terms of service');
     });
   }, []);

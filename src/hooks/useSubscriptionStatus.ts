@@ -1,7 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+import { useRouter } from 'expo-router';
 import { subscriptionRepository } from '@/data/repositories/SubscriptionRepository';
+import { userRepository } from '@/data/repositories/UserRepository';
 import { queryKeys } from '@/lib/queryKeys';
+import { FREE_TRIP_LIMIT } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 import { format, parseISO, differenceInDays } from 'date-fns';
 
@@ -12,13 +15,22 @@ export function useSubscriptionStatus() {
   const user = useAuthStore((state) => state.user);
   const userId = user?.uid ?? '';
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const query = useQuery({
     queryKey: queryKeys.subscription.status(userId),
     queryFn: () => subscriptionRepository.getSubscriptionStatus(userId),
     enabled: !!userId,
-    staleTime: 60 * 1000, // 1 minute - subscription status should be fresh
-    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const tripCountQuery = useQuery({
+    queryKey: queryKeys.user.tripCount(userId),
+    queryFn: () => userRepository.getLifetimeTripCount(userId),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Format expiry date for display
@@ -56,6 +68,20 @@ export function useSubscriptionStatus() {
     }
   }, [query.data?.expiresAt]);
 
+  const lifetimeTripCount = tripCountQuery.data ?? 0;
+  const isPro = query.data?.tier === 'pro';
+
+  const canCreateTrip = useMemo(
+    () => isPro || lifetimeTripCount < FREE_TRIP_LIMIT,
+    [isPro, lifetimeTripCount]
+  );
+
+  const checkAndGate = useCallback((): boolean => {
+    if (canCreateTrip) return true;
+    router.push('/paywall');
+    return false;
+  }, [canCreateTrip, router]);
+
   // Invalidate and refetch subscription data
   const invalidate = useCallback(async () => {
     await queryClient.invalidateQueries({
@@ -66,7 +92,7 @@ export function useSubscriptionStatus() {
   return {
     subscription: query.data,
     isActive: query.data?.isActive ?? false,
-    isPro: query.data?.tier === 'pro',
+    isPro,
     tier: query.data?.tier ?? 'free',
     expiresAt: query.data?.expiresAt ?? null,
     formattedExpiryDate,
@@ -79,5 +105,8 @@ export function useSubscriptionStatus() {
     error: query.error,
     refetch: query.refetch,
     invalidate,
+    lifetimeTripCount,
+    canCreateTrip,
+    checkAndGate,
   };
 }

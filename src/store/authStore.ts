@@ -12,6 +12,7 @@ import {
   type StoredUser,
 } from '@/data/sources/local/secureStore';
 import { type DomainError, normalizeFirebaseError } from '@/errors/DomainError';
+import { appsFlyerService } from '@/services/appsFlyerService';
 
 // App User type (stored locally)
 export interface AppUser {
@@ -85,7 +86,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const result = await registerWithEmail(name, email, password);
       const appUser = toAppUser(result.user);
 
-      // Store user data locally for persistence
       await SecureStoreService.setUser({
         uid: appUser.uid,
         email: appUser.email,
@@ -93,11 +93,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         photoURL: appUser.photoURL,
       });
 
-      // Get and store the ID token
       const token = await result.user.getIdToken();
       await SecureStoreService.setToken(token);
 
       set({ user: appUser, loading: false });
+
+      appsFlyerService.trackRegistration('email');
     } catch (err: any) {
       const domainError = normalizeFirebaseError(err.code);
       set({ error: domainError, loading: false });
@@ -122,6 +123,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await SecureStoreService.setToken(token);
 
       set({ user: appUser, loading: false });
+
+      if (result.isNewUser) {
+        appsFlyerService.trackRegistration('apple');
+      }
     } catch (err: any) {
       // User cancelled the Apple Sign In flow
       if (err.code === 'ERR_REQUEST_CANCELED') {

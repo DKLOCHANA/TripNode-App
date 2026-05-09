@@ -1,4 +1,5 @@
 export { analyticsService, AnalyticsEvents, type AnalyticsEvent } from './analyticsService';
+export { appsFlyerService } from './appsFlyerService';
 export { hapticService } from './hapticService';
 export { revenueCatService } from './revenueCatService';
 

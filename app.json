@@ -2,7 +2,7 @@
   "expo": {
     "name": "TripNode",
     "slug": "tripnode",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -19,9 +19,20 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "We need your location to help you find places for your trips",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to help you find places for your trips"
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to help you find places for your trips",
+        "NSUserTrackingUsageDescription": "This allows TripNode to provide you with a more personalized experience and measure the effectiveness of our campaigns.",
+        "SKAdNetworkItems": [
+          { "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork" },
+          { "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork" },
+          { "SKAdNetworkIdentifier": "p78axxw29g.skadnetwork" },
+          { "SKAdNetworkIdentifier": "cp8zw746q7.skadnetwork" },
+          { "SKAdNetworkIdentifier": "c6k4g5qg8m.skadnetwork" },
+          { "SKAdNetworkIdentifier": "s39g8k73mm.skadnetwork" },
+          { "SKAdNetworkIdentifier": "3qy4746246.skadnetwork" },
+          { "SKAdNetworkIdentifier": "hs6bdukanm.skadnetwork" }
+        ]
       },
-      "buildNumber": "1",
+      "buildNumber": "14",
       "appleTeamId": "CLNUVH5GRA"
     },
     "plugins": [
@@ -30,15 +41,22 @@
       "expo-image",
       "expo-apple-authentication",
       "expo-splash-screen",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-appsflyer",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This allows TripNode to provide you with a more personalized experience and measure the effectiveness of our campaigns."
+        }
+      ]
     ],
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4d1959ce-7965-4052-9664-75f7533cf213"
+        "projectId": "2f48bde9-60e9-4510-b487-1447d031f3b9"
       }
     },
-    "owner": "lochanaclaudedevs-organization",
+    "owner": "kavindu_k",
     "android": {
       "package": "com.tripnode.app"
     }

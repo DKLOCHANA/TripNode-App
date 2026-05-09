@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
 import { Button } from '@/presentation/components/ui/Button';
 import { useOnboardingStore } from '@/store/onboardingStore';
+import { appsFlyerService } from '@/services/appsFlyerService';
+import { shouldEnableAppsFlyer } from '@/lib/environment';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
@@ -25,6 +27,12 @@ export function FinalCTAScreen() {
   const supportingOpacity = useRef(new Animated.Value(0)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
   const buttonTranslateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (shouldEnableAppsFlyer()) {
+      appsFlyerService.requestTrackingPermission();
+    }
+  }, []);
 
   useEffect(() => {
     // Headline animation

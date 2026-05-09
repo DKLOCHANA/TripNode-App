@@ -43,6 +43,14 @@ export function shouldEnableRevenueCat(): boolean {
 }
 
 /**
+ * Determine if AppsFlyer should be enabled
+ * Disabled in Expo Go (no native support), enabled in dev builds and production
+ */
+export function shouldEnableAppsFlyer(): boolean {
+  return !isExpoGoApp();
+}
+
+/**
  * Log environment info for debugging
  */
 export function logEnvironmentInfo(): void {

@@ -4,4 +4,5 @@ export interface User {
   name: string | null;
   photoUrl: string | null;
   createdAt: string;
+  lifetimeTripCount: number;
 }

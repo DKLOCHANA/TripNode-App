@@ -4,15 +4,16 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { queryClient } from '@/lib/queryClient';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { ScreenErrorBoundary } from '@/errors/errorBoundary';
 import { revenueCatService } from '@/services/revenueCatService';
+import { appsFlyerService } from '@/services/appsFlyerService';
 import { REVENUECAT } from '@/lib/constants';
 import { queryKeys } from '@/lib/queryKeys';
-import { shouldEnableRevenueCat, logEnvironmentInfo } from '@/lib/environment';
+import { shouldEnableRevenueCat, shouldEnableAppsFlyer, logEnvironmentInfo } from '@/lib/environment';
 
 function useAuthRedirect() {
   const { user, isHydrated, init } = useAuthStore();
@@ -43,7 +44,7 @@ function useAuthRedirect() {
         }
         // Pass both production and test keys - service will try production first,
         // fall back to test key if native store is unavailable
-        revenueCatService.configure(REVENUECAT.API_KEY, REVENUECAT.TEST_API_KEY);
+        revenueCatService.configure(REVENUECAT.API_KEY,REVENUECAT.TEST_API_KEY);
         revenueCatInitialized.current = true;
         console.log('[App] ✅ RevenueCat initialization completed');
       } catch (error) {
@@ -52,6 +53,13 @@ function useAuthRedirect() {
       }
     } else {
       console.log('[App] ⏭️ Skipping RevenueCat initialization');
+    }
+  }, []);
+
+  // Initialize AppsFlyer SDK on app start (only if not in Expo Go)
+  useEffect(() => {
+    if (shouldEnableAppsFlyer()) {
+      appsFlyerService.initSdk();
     }
   }, []);
 
@@ -80,29 +88,16 @@ function useAuthRedirect() {
         isIdentifying.current = true;
         try {
           const result = await revenueCatService.identify(user.uid);
+          appsFlyerService.setCustomerUserId(user.uid);
+
+          const appsFlyerUID = await appsFlyerService.getUID();
+          if (appsFlyerUID) {
+            await revenueCatService.setAppsflyerID(appsFlyerUID);
+          }
+
           if (result) {
             previousUserId.current = user.uid;
             console.log('[App] ✅ User identified successfully');
-            
-            // Check for expired subscription and show alert
-            console.log('[App] 🔍 Checking subscription details...');
-            const details = await revenueCatService.getSubscriptionDetails();
-            console.log('[App] 📊 Subscription details:', details);
-            
-            if (details.isExpired) {
-              console.log('[App] ⚠️ Subscription expired - showing alert');
-              Alert.alert(
-                'Subscription Expired',
-                'Your TripNode Premium subscription has expired. Renew now to continue enjoying premium features.',
-                [
-                  { text: 'Later', style: 'cancel' },
-                  { 
-                    text: 'Renew Now', 
-                    onPress: () => router.push('/paywall'),
-                  },
-                ]
-              );
-            }
           }
         } catch (error: any) {
           // Ignore rate limiting errors (code 7638) - not critical

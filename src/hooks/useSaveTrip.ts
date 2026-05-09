@@ -3,6 +3,7 @@ import type { Itinerary } from '@/domain/entities/Itinerary';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { saveTrip } from '@/services/tripsStorageService';
+import { userRepository } from '@/data/repositories/UserRepository';
 
 export function useSaveTrip(userId?: string) {
   return useMutation({
@@ -16,6 +17,14 @@ export function useSaveTrip(userId?: string) {
       });
 
       queryClient.setQueryData(queryKeys.trips.detail(savedTrip.id), savedTrip);
+
+      userRepository.incrementTripCount(userId)
+        .then(() => {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.user.tripCount(userId),
+          });
+        })
+        .catch((err) => console.warn('Failed to increment trip count:', err));
     },
   });
 }

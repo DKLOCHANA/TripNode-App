@@ -8,6 +8,7 @@ export interface UserDto {
   photoUrl: string | null;
   createdAt: string;
   updatedAt?: string;
+  lifetimeTripCount?: number;
 }
 
 /**

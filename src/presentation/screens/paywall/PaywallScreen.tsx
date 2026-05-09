@@ -20,12 +20,6 @@ import { shadows } from '@/theme/shadows';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.38;
 
-const FEATURES = [
-  'Unlimited AI Itineraries',
-  'Offline Travel Guides',
-  'Priority Support',
-  'Ad-Free Experience',
-];
 
 export function PaywallScreen() {
   const insets = useSafeAreaInsets();
@@ -88,24 +82,25 @@ export function PaywallScreen() {
           Unlock the Full{'\n'}Adventure
         </Typography>
 
-        {/* Features List */}
-        <View style={styles.featuresContainer}>
-          {FEATURES.map((feature) => (
-            <View key={feature} style={styles.featureRow}>
-              <Ionicons
-                name="checkmark"
-                size={20}
-                color={paywallColors.checkmark}
-                style={styles.checkIcon}
-              />
-              <Typography
-                variant="body"
-                color={paywallColors.textPrimary}
-              >
-                {feature}
-              </Typography>
-            </View>
-          ))}
+        {/* Feature Highlight */}
+        <View style={[styles.featureHighlight, { backgroundColor: paywallColors.checkmark + '0F', borderColor: paywallColors.checkmark + '25' }]}>
+          <Ionicons name="infinite" size={28} color={paywallColors.checkmark} />
+          <Typography
+            variant="headline"
+            weight="semiBold"
+            align="center"
+            color={paywallColors.textPrimary}
+            style={styles.featureTitle}
+          >
+            Unlimited AI Itineraries
+          </Typography>
+          <Typography
+            variant="subheadline"
+            align="center"
+            color={paywallColors.textSecondary}
+          >
+            Create as many trips as you want{'\n'}with AI-powered planning
+          </Typography>
         </View>
 
         {/* Plan Cards */}
@@ -276,19 +271,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   title: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  featuresContainer: {
-    marginBottom: spacing.xl,
-    paddingLeft: spacing.md,
-  },
-  featureRow: {
-    flexDirection: 'row',
+  featureHighlight: {
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    marginBottom: spacing.xl,
   },
-  checkIcon: {
-    marginRight: spacing.sm,
+  featureTitle: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.xxs,
   },
   plansContainer: {
     gap: spacing.md,

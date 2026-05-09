@@ -16,6 +16,7 @@ import { auth, db } from './config';
 
 export interface AuthResult {
   user: User;
+  isNewUser?: boolean;
 }
 
 export async function registerWithEmail(
@@ -32,6 +33,7 @@ export async function registerWithEmail(
     uid: credential.user.uid,
     name,
     email,
+    lifetimeTripCount: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -103,18 +105,20 @@ export async function signInWithApple(): Promise<AuthResult> {
   // Create Firestore user doc if it doesn't exist (first sign-in)
   const userDocRef = doc(db, 'users', result.user.uid);
   const userDoc = await getDoc(userDocRef);
+  const isNewUser = !userDoc.exists();
 
-  if (!userDoc.exists()) {
+  if (isNewUser) {
     await setDoc(userDocRef, {
       uid: result.user.uid,
       name: displayName || result.user.displayName || 'Apple User',
       email: result.user.email,
+      lifetimeTripCount: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
   }
 
-  return { user: result.user };
+  return { user: result.user, isNewUser };
 }
 
 export async function sendPasswordResetEmail(email: string): Promise<void> {

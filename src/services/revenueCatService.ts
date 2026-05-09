@@ -521,6 +521,23 @@ export const revenueCatService = {
   },
 
   /**
+   * Set the AppsFlyer ID as a subscriber attribute.
+   * Required for the RevenueCat ↔ AppsFlyer server-to-server integration.
+   */
+  setAppsflyerID: async (appsflyerID: string): Promise<void> => {
+    if (!isRevenueCatConfigured) return;
+
+    try {
+      await Purchases.setAppsflyerID(appsflyerID);
+      if (__DEV__) {
+        console.log('[RevenueCat] AppsFlyer ID set:', appsflyerID);
+      }
+    } catch (error) {
+      console.error('[RevenueCat] Failed to set AppsFlyer ID:', error);
+    }
+  },
+
+  /**
    * Add listener for customer info updates
    * Returns a function to remove the listener
    */

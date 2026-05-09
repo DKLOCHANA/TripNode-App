@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import type { Itinerary } from '@/domain/entities/Itinerary';
 import { useAuthStore } from '@/store/authStore';
 import { useDeleteTrip, useTrips, useHaptic } from '@/hooks';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { checkNetworkAndAlert } from '@/lib/network';
 
 export function useMyTripsViewModel() {
@@ -11,6 +12,7 @@ export function useMyTripsViewModel() {
   const { data, isLoading, isFetching } = useTrips(userId);
   const deleteTripMutation = useDeleteTrip(userId);
   const haptic = useHaptic();
+  const subscription = useSubscriptionStatus();
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const trips = data ?? [];
@@ -21,8 +23,9 @@ export function useMyTripsViewModel() {
   );
 
   const handlePlanTrip = useCallback(() => {
+    if (!subscription.checkAndGate()) return;
     router.push('/(app)/plan');
-  }, [router]);
+  }, [router, subscription]);
 
   const handleOpenTrip = useCallback(
     (tripId: string) => {

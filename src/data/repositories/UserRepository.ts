@@ -1,6 +1,6 @@
 import type { IUserRepository } from '@/domain/repositories/IUserRepository';
 import type { User } from '@/domain/entities/User';
-import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '@/data/sources/remote/firebase/config';
 
 /**
@@ -24,6 +24,7 @@ export class UserRepository implements IUserRepository {
       name: data.name ?? data.displayName ?? null,
       photoUrl: data.photoUrl ?? data.photoURL ?? null,
       createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
+      lifetimeTripCount: data.lifetimeTripCount ?? 0,
     };
   }
 
@@ -40,6 +41,18 @@ export class UserRepository implements IUserRepository {
     await updateDoc(docRef, updateData);
 
     return this.getProfile(userId);
+  }
+
+  async incrementTripCount(userId: string): Promise<void> {
+    const docRef = doc(db, this.collection, userId);
+    await updateDoc(docRef, { lifetimeTripCount: increment(1) });
+  }
+
+  async getLifetimeTripCount(userId: string): Promise<number> {
+    const docRef = doc(db, this.collection, userId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return 0;
+    return docSnap.data().lifetimeTripCount ?? 0;
   }
 
   async deleteProfile(userId: string): Promise<void> {

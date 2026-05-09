@@ -6,6 +6,7 @@ export const queryKeys = {
   },
   user: {
     profile: (userId: string) => ['user', 'profile', userId] as const,
+    tripCount: (userId: string) => ['user', 'tripCount', userId] as const,
   },
   subscription: {
     status: (userId: string) => ['subscription', userId] as const,
