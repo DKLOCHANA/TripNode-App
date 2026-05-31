@@ -1,0 +1,90 @@
+00:00:00
+If you're building a mobile app right now, there is one thing that will make or break your revenue, and it's not your idea, your design, or your marketing. >> Your onboarding is the single most important part of your app because an app is nothing more than a salesunnel. >> This is Mao. He built a mobile app that makes over $40,000 a month. And he is a genius when it comes to building onboarding flows that convert. every screen before hitting the payw wall is just building a case of why the user
+
+00:00:30
+should pay you. So, I asked him to come on to the channel to do a full screen by screen breakdown of his entire onboarding flow that turned his app into a $40,000 per month business. He's going to walk us through the psychology, the design choices, and why every single screen is placed exactly where it is. By the end of this video, you're going to learn why making your onboarding longer can actually triple your conversions. the exact screen that gets 1 in eight users to leave a review and the
+
+00:01:00
+psychology tricks that convince users to buy before they ever even hit the payw wall. If you're building anything in mobile, this might be the most important video you'll watch this year. All right, let's get into it. Welcome to Starter Story Build. All right, guys, before we dive in, we talked to Mao for 40 to 50 minutes and we couldn't include everything in this final video. So, after watching this video, if you want to download the extended version of Mao's onboarding guide that has all of his screens, all
+
+00:01:27
+the tactics, and everything, just head to the first link in the description to grab it for free. All right, let's dive in. Okay, Mao, welcome back to the channel. You did an awesome video about this awesome app that you built, and we asked you to come back to talk about one thing that a lot of people asked about in the comments, which is onboarding. But, if you could remind us real quick about who you are, what you built, and how your app is doing now. >> Yeah, of course. Thanks for having me
+
+00:01:51
+on, Pat. So, my name is Mal Baron and I built a mobile app that makes over 40K a month. And I don't have, you know, a design background or a UX background at all. I studied finance in college. I'm just a guy who taught himself about AI. But what I do have is the experience of building a few mobile apps from scratch, just completely obsessing over what actually makes them convert. Through trial and error, I started iterating my onboardings and studying what I consider to be, you know, the best onboardings in
+
+00:02:18
+the market. and you know everything changed and that's when my app started skyrocketing. >> I hear a lot of people on the channel talk about this onboarding and how important it is with mobile apps but could you just explain what that means? Like what is onboarding and why is it so important? >> Yeah. So I'm going to sound like a broken record but your onboarding is the single most important part of your app because an app is nothing more than a sales funnel. When a user first opens
+
+00:02:43
+your app they have zero context about what your app does. They don't know, you know, if it's going to solve their problem. And this is why the onboarding matters even more. Right now, every screen before hitting the payw wall is just building a case of why the user should pay you. Okay, cool. I want you to give me the highle overview of how to set up an onboarding. What are like the pillars of onboarding that pretty much any app should have? So, onboardings are like a story. They have an introduction,
+
+00:03:10
+a climax, and a conclusion. Every screen serves a purpose and most of them have nothing to do with the product itself. They're about making the user feel heard, making them reflect, and making them convince themselves that they need your app. So, just keep that in mind as we go through this. >> Okay, cool. So, let's go through the three pillars. So, it's introduction, climax, and conclusion. Let's dive into the introduction side of things right now. Can you walk me through all the
+
+00:03:38
+concepts in here and all the screens of your app? So, I actually have four principles in the introduction section of the onboarding. The first one being that you need to frame the problem and solution in the first three screens of your app. The sooner the better cuz confusion honestly just kills conversions and users need to know exactly what they're getting themselves into. In prayer locks case, the way we do it is we welcome you and then in the second screen right there, we tell you, hey, like, do you ever feel like your
+
+00:04:03
+phone gets more attention than God? We're already framing the problem of phone addiction, social media addiction. And then in the third screen, we give you a solution in very simple terms. Prayer lock helps you put God first. So right there, we're framing the exact problem the user has, and the user knows exactly what they're going to get from the app. The second principle of the introduction is to give the users an aha moment in under a minute. Hit them with a stat or realization that is very
+
+00:04:32
+personal to them. The way we do that in Prairie Lock's case is actually very unhinged because we ask you first for your name, but then we ask their age and how long they are on their phone each day. And whenever they answer in the next screen, they always get a stat that kind of just blows them away, which is on average they're going to use their phone for 16 years over their lifetime. But then we tell them, hey, don't worry. We are the solution again. Do you have just 5 minutes for godage day? Let's
+
+00:05:00
+build a plan for you. And then the next principle of the onboarding is to ask questions. Now most people think that the questions are so that you as the app maker get to know more about your users. But that's not the case at all. What you absolutely want to do is to make the users convince themselves that this is an app that they need. In Prairie Lock's case, again, we just ask very personal questions that we already know the users struggle with, like thinking bigger. What does a thriving face look like to
+
+00:05:28
+you? And each answer choice is very deliberate. The fourth principle of the introduction is that you need to reflect the users's answers back at them. If in your onboarding you ask a question about social media addiction and they tell you, "Yes, I have social media addiction." In the next screen, you would say, "Hey, we see that you have social media addiction." So, in prayer lock's case, we ask them, "What do you want to achieve with prayer lock?" They say, "I want to put God first before my
+
+00:05:53
+phone, build consistent prayer habit, etc." We just pit those same answers right back at them in the next screen. And this sounds silly, but what this does is makes the user feel heard, makes the user feel like this is going to be a personalized experience for them. And then something to keep in mind, longer onboardings will do better. In Perilock's old onboarding, we had only around 20 screens and our conversion rate with free trial was around 3%. When we updated the onboarding to be more
+
+00:06:19
+than 10 to 15 minutes long, depending on the user, our conversion rate 5xed to 15%. The reason this happens is because of something called loss aversion. And people in general would rather not lose than win something. So by the time they get to the pay wall, they're thinking, "Hey, I already invested 10 minutes, so I might as well just give it a shot and start the trial. Why not?" >> Ma's onboarding principles are incredible. If you're building anything in mobile, this is gold. We actually
+
+00:06:47
+ended up recording a lot longer than what we could include here in this starter story build YouTube video. So, we actually asked Mao to write up a detailed guide on how to create an epic onboarding flow that converts. And inside, we go on an even deeper dive into each screen he sets up and why. He'll break down every single screen, why it works, and how you can implement it inside your app. Just head to the link in the description and download it for free. All right, let's get back into
+
+00:07:12
+the video. Okay, let's move to the second pillar of onboarding. What did you call this section? Let's dive in. So uh the second part of your onboarding is the climax. And again I have two principles for the climax part of your story. As in any story the climax should be the most exhilarating for users, the most fun, the most entertaining part. The easiest way to get that done is through the first principle. Let the user actually try your main feature during the onboarding. In prayer locks
+
+00:07:40
+case, the way we do it is we ask you two questions and then we generate a prayer for you. Then the second principle of the climax on your onboarding is getting them to leave a review. And the screen that actually gets them to convert on a review is showing some type of gamification aspect, some type of streak. In our case, we show their first day streak of their prayer journey with a little fire animation. But after showing that, we then hit them with the review model. And one of the reasons why
+
+00:08:07
+reviews are so important is because most users will actually never pay, especially if it's a hard payable app. So a review is the next best thing they can give you. So don't waste that moment by showing the review model either too early where the user is still getting familiar with your app or too late where the emotional peak has already died down. >> Wow, this is super cool. I'm actually on the app store listing right now and you have like thousands and thousands of reviews. Why get so many reviews? What's
+
+00:08:37
+the purpose of having a lot of reviews? Does it bring you more revenue or why do that? >> So actually review do two things for you. The first one and the most important one is social proof. When you're about to download the app and you know in the app store and you see 13,000 reviews like that gives you much more confidence that this is you know something that you might want to download cuz a lot of people have done it too. And then the other reason is for ASO you know it's just how well you rank
+
+00:09:02
+on the app store. So you want to make sure that you're at least ranking at number one in your app's name keyword. So my app is called prayer lock. I want to make sure I'm number one for prayer lock. Okay. So let's move to the next pillar. What's the final pillar of a great onboarding? Can you walk us through that? >> Yeah. So the last pillar of your onboarding is of course the conclusion. And for the conclusion I have three principles. The first one is to show them a summary of their journey. You
+
+00:09:27
+know where they are, where they want to go and how your app gets them there. And a lot of this stuff sounds very repetitive because in the introduction of the onboarding, we were actually reflecting back the answers. But you want to keep doing that. Remember people, especially young people, have short attention spans. So, it's a good thing to be repeating yourself constantly. In our app's case, we actually first show them a little summary here. Tell them, hey, you're going to have a prayer habit in 30 days.
+
+00:09:53
+Try to always connect your app to a certain habit that they can achieve in an x amount of days. And then the second and actually controversial principle is to tell your users upfront that your app is paid. Only if you have a free trial. If you don't, I would say skip this because you might lose a lot of people there. And then compare your app against something they already pay for in real life. In prayer locks case, we have this screen where we compare the cost of one coffee a month to spiritual peace. So
+
+00:10:21
+you want to make the user be thinking of your app as something that is very worth it compared to, you know, some other usual thing that they do with their day. And then the third and last principle is to try to get the user to say that they are committed to using your app. In our apps case, we literally just ask them, hey, how committed are you to making this future happen? And usually we have found that 95% of them will either answer extremely committed or very committed. If they were to answer any
+
+00:10:47
+other thing, we have custom copy for that situation. And then as your last screen, I would recommend a social proof screen like the one we have here. And yeah, that's it for the onboarding. After that, of course, you have your payw wall. But don't overthink this part too much. You know, the payw wall is actually not as important as people might think, at least in the beginning. The only thing I would say you should add in your payw wall is a notification reminder one day before your trial ends.
+
+00:11:14
+That's like the only thing I would say to focus on for your payroll. >> Okay, cool. Uh, I think a lot of people watching this might be wondering, okay, this is cool. You showed me your onboarding. This works great for you, but what about everyone else that's building apps? Will this work for them? What changes would you make? uh what would you have to say about this? >> So actually I wasn't the first one that did this. I took inspiration from other apps like Twitter, like Calai. You know,
+
+00:11:39
+a lot of these apps already have very long on boardings and already have the principles that I just described. And if you're thinking it might not work for your app, just keep in mind that Cali was just acquired for probably multiple nine figures and they have one of the longest onboardings in the mobile app space. So it definitely works for your app. Just make sure you follow the principles that I laid out. >> Okay, so last question I have, but before I want to touch on it, you might
+
+00:12:03
+be watching this and thinking, "Okay, this is cool, but how do I get users?" I'll put a link in the description down there. Go watch our previous starter story interview with Mao where he talks all about that uh social media and how he drives a lot of people to actually check out the app and then go check out the onboarding. So definitely check that out. Last question that I have for you now is for anyone that is building an app, but they're want to figure out how I could do onboarding uh and do what
+
+00:12:28
+you've done, which is built an app from basically 0 to $40,000 a month. What would be your main piece of advice? So, I would say before you touch your product, before you add useless features, obsess over two things. Obsess over marketing first and then over your onboarding. do that until you hit at least a 10% download to trial rate. Then everything else comes after that. Thanks for coming on, Mau sharing all this. I think people are going to really enjoy it. And uh put a note in the comments
+
+00:12:57
+what you want to see Mau talk about next. We can talk about distribution. We can talk about anything. So put a comment in there. Thanks M for coming on and sharing. >> Of course. Thank you Pat.
+

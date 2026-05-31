@@ -2,6 +2,7 @@ import { AsyncStorageService } from '@/data/sources/local/asyncStorage';
 import {
   saveTripToFirebase,
   deleteTripFromFirebase,
+  deleteAllTripsFromFirebase,
   getTripsFromFirebase,
   getTripFromFirebase,
 } from '@/data/sources/remote/firebase/firestoreTrips';
@@ -86,6 +87,23 @@ export class TripRepository {
   }
 
   /**
+   * Permanently delete ALL of a user's trips — local + Firestore.
+   * Used by account deletion. Firestore deletion must succeed while the
+   * user is still authenticated, so this awaits it (not fire-and-forget).
+   */
+  async deleteAllForUser(userId: string): Promise<void> {
+    // Remote first, while still authenticated (Firestore security rules).
+    await deleteAllTripsFromFirebase(userId);
+
+    // Then drop the user's local cache entry.
+    const store = await readStore();
+    if (store[userId]) {
+      delete store[userId];
+      await writeStore(store);
+    }
+  }
+
+  /**
    * Sync local trips with Firebase
    */
   async syncWithFirebase(userId: string): Promise<void> {
@@ -156,3 +174,4 @@ export const getTripsByUser = (userId: string) => tripRepository.getTrips(userId
 export const getTripById = (userId: string, tripId: string) => tripRepository.getTripById(userId, tripId);
 export const saveTrip = (itinerary: Itinerary) => tripRepository.saveTrip(itinerary);
 export const deleteTripById = (userId: string, tripId: string) => tripRepository.deleteTrip(userId, tripId);
+export const deleteAllTripsForUser = (userId: string) => tripRepository.deleteAllForUser(userId);

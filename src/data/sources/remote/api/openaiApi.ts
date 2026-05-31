@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY } from '@env';
 
+const OPENAI_API_KEY = process.env.EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY;
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 export interface TripGenerationRequest {
@@ -85,7 +85,7 @@ export async function generateAttractionSuggestions(
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
     }
   );
@@ -136,7 +136,7 @@ export async function generateItinerary(
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${EXPO_PUBLIC_FIREBASE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
     }
   );

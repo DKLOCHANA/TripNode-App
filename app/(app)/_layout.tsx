@@ -2,9 +2,14 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme/ThemeContext';
+import { useTripNotificationSync } from '@/hooks/useTripNotificationSync';
 
 export default function AppLayout() {
   const { colors } = useTheme();
+
+  // Keeps trip reminders in sync with saved trips, the user's preference and
+  // the live OS permission state for the whole authenticated session.
+  useTripNotificationSync();
 
   return (
     <Tabs

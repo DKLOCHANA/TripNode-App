@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { File, Paths } from 'expo-file-system';
 import { useAuthStore } from '@/store/authStore';
+import { useOnboardingStore } from '@/store/onboardingStore';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { queryClient } from '@/lib/queryClient';
@@ -20,49 +21,19 @@ export function useProfileViewModel() {
   const haptic = useHaptic();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
+  const resetOnboarding = useOnboardingStore((s) => s.resetCompletion);
   const subscription = useSubscriptionStatus();
 
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('idle');
   const [deleteInput, setDeleteInput] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
-  const [hasShownExpiryAlert, setHasShownExpiryAlert] = useState(false);
 
   // Load saved profile photo on mount
   useEffect(() => {
     loadSavedPhoto();
   }, []);
-
-  // Show subscription expiry alert
-  useEffect(() => {
-    if (subscription.isExpired && !hasShownExpiryAlert) {
-      setHasShownExpiryAlert(true);
-      Alert.alert(
-        'Subscription Expired',
-        'Your TripNode Premium subscription has expired. Renew now to continue enjoying premium features.',
-        [
-          { text: 'Later', style: 'cancel' },
-          { 
-            text: 'Renew Now', 
-            onPress: () => router.push('/paywall'),
-          },
-        ]
-      );
-    } else if (subscription.isExpiringSoon && !hasShownExpiryAlert && !subscription.renewsAutomatically) {
-      setHasShownExpiryAlert(true);
-      Alert.alert(
-        'Subscription Expiring Soon',
-        `Your TripNode Premium subscription will expire ${subscription.daysUntilExpiry === 1 ? 'tomorrow' : `in ${subscription.daysUntilExpiry} days`}. Renew to keep your premium features.`,
-        [
-          { text: 'Remind Later', style: 'cancel' },
-          { 
-            text: 'Manage Subscription', 
-            onPress: () => router.push('/(app)/subscription'),
-          },
-        ]
-      );
-    }
-  }, [subscription.isExpired, subscription.isExpiringSoon, hasShownExpiryAlert, subscription.renewsAutomatically, subscription.daysUntilExpiry, router]);
 
   const loadSavedPhoto = async () => {
     try {
@@ -98,11 +69,10 @@ export function useProfileViewModel() {
   const userPhotoURL = localPhotoUri || user?.photoURL || null;
   const hasLocalPhoto = !!localPhotoUri;
 
-  // Subscription from RevenueCat
-  const subscriptionTier = subscription.tier;
+  // Subscription from RevenueCat. By the time a user reaches Profile, the hard
+  // paywall has confirmed they are Pro — we surface only the expiry/renewal
+  // information here.
   const subscriptionExpiry = subscription.formattedExpiryDate;
-  const isPro = subscription.isPro;
-  const isExpired = subscription.isExpired;
 
   // Request photo library permission
   const requestPhotoPermission = async (): Promise<boolean> => {
@@ -224,7 +194,9 @@ export function useProfileViewModel() {
     }
   }, [hasLocalPhoto, haptic, localPhotoUri]);
 
-  // Handle logout
+  // Handle logout — lands the user on the first screen of onboarding.
+  // Resetting the onboarding store clears the persisted "completed" flag and
+  // any in-memory answers so the next session starts fresh from screen 1.
   const handleLogout = useCallback(async () => {
     Alert.alert(
       'Log Out',
@@ -235,7 +207,6 @@ export function useProfileViewModel() {
           text: 'Log Out',
           style: 'destructive',
           onPress: async () => {
-            // Check network connectivity first
             if (!(await checkNetworkAndAlert())) {
               haptic.error();
               return;
@@ -245,8 +216,9 @@ export function useProfileViewModel() {
             haptic.lightImpact();
             try {
               await signOut();
+              await resetOnboarding();
               queryClient.clear();
-              router.replace('/(auth)/welcome');
+              router.replace('/(auth)/onboarding');
             } catch {
               Alert.alert('Error', 'Failed to log out. Please try again.');
             } finally {
@@ -256,7 +228,7 @@ export function useProfileViewModel() {
         },
       ]
     );
-  }, [signOut, router, haptic]);
+  }, [signOut, resetOnboarding, router, haptic]);
 
   // Delete account flow
   const handleDeletePress = useCallback(() => {
@@ -295,18 +267,50 @@ export function useProfileViewModel() {
     setDeleteStep('deleting');
 
     try {
-      // Delete local photo if exists
+      // Permanently delete Firestore trips + profile + Firebase Auth
+      // credential + secure store. Throws if Firebase needs a fresh sign-in.
+      await deleteAccount();
+
+      // Account is gone — remove remaining local traces.
       await deleteLocalPhoto();
-      // TODO: Implement full account deletion with Firebase
-      // For now, just sign out
-      await signOut();
       queryClient.clear();
-      router.replace('/(auth)/welcome');
-    } catch {
-      Alert.alert('Error', 'Failed to delete account. Please try again or contact support.');
+      // Wipe the onboarding completion flag so the user goes back through
+      // the full onboarding flow, not straight to sign-in.
+      await resetOnboarding();
+      router.replace('/(auth)/onboarding');
+    } catch (err: any) {
       setDeleteStep('idle');
+
+      if (err?.requiresRecentLogin) {
+        // Nothing was deleted — Firebase requires a recent sign-in first.
+        Alert.alert(
+          'Sign in again to delete',
+          'For your security, please sign out and sign back in, then delete your account. Your data has NOT been deleted yet.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign Out',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await signOut();
+                } finally {
+                  queryClient.clear();
+                  router.replace('/(auth)/onboarding');
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Error',
+        'Failed to delete account. Please check your connection and try again, or contact support.'
+      );
     }
-  }, [deleteInput, signOut, router, haptic]);
+  }, [deleteInput, deleteAccount, signOut, resetOnboarding, router, haptic]);
 
   // External links
   const handlePrivacyPolicy = useCallback(() => {
@@ -321,13 +325,6 @@ export function useProfileViewModel() {
     });
   }, []);
 
-  // Upgrade to pro or manage subscription
-  const handleUpgradeToPro = useCallback(() => {
-    haptic.lightImpact();
-    router.push('/paywall');
-  }, [router, haptic]);
-
-  // Manage subscription for pro users
   const handleManageSubscription = useCallback(() => {
     haptic.lightImpact();
     router.push('/(app)/subscription');
@@ -343,10 +340,7 @@ export function useProfileViewModel() {
     hasLocalPhoto,
 
     // Subscription
-    subscriptionTier,
     subscriptionExpiry,
-    isPro,
-    isExpired,
     isSubscriptionLoading: subscription.isLoading,
     renewsAutomatically: subscription.renewsAutomatically,
 
@@ -366,7 +360,6 @@ export function useProfileViewModel() {
     handleLogout,
     handlePrivacyPolicy,
     handleTermsOfService,
-    handleUpgradeToPro,
     handleManageSubscription,
     handleAvatarPress,
   };

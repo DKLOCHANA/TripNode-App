@@ -12,48 +12,32 @@ import { ScreenErrorBoundary } from '@/errors/errorBoundary';
 import { revenueCatService } from '@/services/revenueCatService';
 import { appsFlyerService } from '@/services/appsFlyerService';
 import { REVENUECAT } from '@/lib/constants';
-import { queryKeys } from '@/lib/queryKeys';
 import { shouldEnableRevenueCat, shouldEnableAppsFlyer, logEnvironmentInfo } from '@/lib/environment';
+import { configureNotificationHandler } from '@/services/notificationService';
+import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 
 function useAuthRedirect() {
   const { user, isHydrated, init } = useAuthStore();
   const segments = useSegments();
   const revenueCatInitialized = useRef(false);
-  const previousUserId = useRef<string | null>(null);
-  const isIdentifying = useRef(false); // Prevent concurrent identify calls
 
-  // Log environment info on first render
+  const { status: gateStatus } = useSubscriptionGate(user?.uid ?? null, isHydrated);
+
+  // Boot-time side effects.
   useEffect(() => {
     logEnvironmentInfo();
+    configureNotificationHandler();
   }, []);
 
-  // Initialize RevenueCat SDK on app start (only if not in Expo Go)
+  // Configure RevenueCat once. The gate hook handles identify/logout from here.
   useEffect(() => {
-    console.log('[App] 🚀 RevenueCat initialization check...');
-    console.log('[App] 🔑 Production API_KEY exists:', !!REVENUECAT.API_KEY);
-    console.log('[App] 🔑 Test API_KEY exists:', !!REVENUECAT.TEST_API_KEY);
-    console.log('[App] ✅ shouldEnableRevenueCat():', shouldEnableRevenueCat());
-    console.log('[App] ✅ Already initialized:', revenueCatInitialized.current);
-    
-    if (!revenueCatInitialized.current && shouldEnableRevenueCat()) {
-      console.log('[App] 🚀 Configuring RevenueCat...');
-      try {
-        if (!REVENUECAT.API_KEY) {
-          console.error('[App] ❌ RevenueCat API key is undefined!');
-          return;
-        }
-        // Pass both production and test keys - service will try production first,
-        // fall back to test key if native store is unavailable
-        revenueCatService.configure(REVENUECAT.API_KEY,REVENUECAT.TEST_API_KEY);
-        revenueCatInitialized.current = true;
-        console.log('[App] ✅ RevenueCat initialization completed');
-      } catch (error) {
-        console.error('[App] ❌ Failed to configure RevenueCat:', error);
-        revenueCatInitialized.current = false;
-      }
-    } else {
-      console.log('[App] ⏭️ Skipping RevenueCat initialization');
+    if (revenueCatInitialized.current || !shouldEnableRevenueCat()) return;
+    if (!REVENUECAT.API_KEY) {
+      console.error('[App] RevenueCat API key is undefined');
+      return;
     }
+    revenueCatService.configure(REVENUECAT.API_KEY, REVENUECAT.TEST_API_KEY);
+    revenueCatInitialized.current = true;
   }, []);
 
   // Initialize AppsFlyer SDK on app start (only if not in Expo Go)
@@ -68,105 +52,54 @@ function useAuthRedirect() {
     return unsubscribe;
   }, []);
 
-  // Identify user with RevenueCat when user changes
-  useEffect(() => {
-    const identifyUser = async () => {
-      console.log('[App] 👤 identifyUser check...');
-      console.log('[App] 👤 isIdentifying:', isIdentifying.current);
-      console.log('[App] 👤 shouldEnableRevenueCat:', shouldEnableRevenueCat());
-      console.log('[App] 👤 user exists:', !!user);
-      console.log('[App] 👤 previousUserId:', previousUserId.current);
-      
-      // Skip if already identifying, user hasn't changed, or RevenueCat not available
-      if (isIdentifying.current || !shouldEnableRevenueCat()) {
-        console.log('[App] ⏭️ Skipping user identification');
-        return;
-      }
-      
-      if (user && user.uid !== previousUserId.current) {
-        console.log('[App] 👤 Identifying user:', user.uid);
-        isIdentifying.current = true;
-        try {
-          const result = await revenueCatService.identify(user.uid);
-          appsFlyerService.setCustomerUserId(user.uid);
-
-          const appsFlyerUID = await appsFlyerService.getUID();
-          if (appsFlyerUID) {
-            await revenueCatService.setAppsflyerID(appsFlyerUID);
-          }
-
-          if (result) {
-            previousUserId.current = user.uid;
-            console.log('[App] ✅ User identified successfully');
-          }
-        } catch (error: any) {
-          // Ignore rate limiting errors (code 7638) - not critical
-          if (error?.info?.backendErrorCode !== 7638) {
-            console.error('[App] ❌ Failed to identify user with RevenueCat:', error);
-          } else {
-            console.log('[App] ⚠️ Rate limiting error - ignoring');
-          }
-        } finally {
-          isIdentifying.current = false;
-        }
-      } else if (!user && previousUserId.current && shouldEnableRevenueCat()) {
-        console.log('[App] 👤 Logging out user from RevenueCat');
-        isIdentifying.current = true;
-        try {
-          await revenueCatService.logOut();
-          previousUserId.current = null;
-          console.log('[App] ✅ User logged out successfully');
-        } catch (error) {
-          console.error('[App] ❌ Failed to log out from RevenueCat:', error);
-        } finally {
-          isIdentifying.current = false;
-        }
-      }
-    };
-
-    if (isHydrated) {
-      identifyUser();
-    }
-  }, [user, isHydrated]);
-
-  // Set up customer info update listener (only if RevenueCat is available)
-  useEffect(() => {
-    if (!user || !shouldEnableRevenueCat()) return;
-
-    const unsubscribe = revenueCatService.addCustomerInfoUpdateListener((customerInfo) => {
-      // Invalidate subscription query when customer info updates
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.subscription.status(user.uid),
-      });
-    });
-
-    return unsubscribe;
-  }, [user]);
-
+  // Routing: auth + hard paywall gate.
+  //
+  // States:
+  //   - signed out                         → /(auth)/welcome
+  //   - signed in, gate 'unknown'          → stay (loading splash)
+  //   - signed in, gate 'pro'              → /(app)/plan
+  //   - signed in, gate 'none'             → /paywall (cannot be dismissed)
   useEffect(() => {
     if (!isHydrated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inAppGroup = segments[0] === '(app)';
+    const isPaywall = segments[0] === 'paywall';
     const isIndex = !segments[0];
 
-    if (user && (inAuthGroup || isIndex)) {
-      router.replace('/(app)/plan');
-    } else if (!user && !inAuthGroup) {
-      router.replace('/(auth)/welcome');
+    if (!user) {
+      if (!inAuthGroup) router.replace('/(auth)/welcome');
+      return;
     }
-  }, [user, isHydrated, segments]);
 
-  return { isHydrated };
+    if (gateStatus === 'unknown') return;
+
+    if (gateStatus === 'pro') {
+      if (!inAppGroup) router.replace('/(app)/plan');
+      return;
+    }
+
+    // gateStatus === 'none' — user must purchase to proceed
+    if (!isPaywall) router.replace('/paywall');
+    // touch isIndex so the linter sees it; harmless and documents intent
+    void isIndex;
+  }, [user, isHydrated, segments, gateStatus]);
+
+  return { isHydrated, gateStatus, hasUser: !!user };
 }
 
 function RootLayoutContent() {
-  const { isHydrated } = useAuthRedirect();
+  const { isHydrated, gateStatus, hasUser } = useAuthRedirect();
   const { colors, isDark } = useTheme();
+
+  // Show splash while auth hydrates, or while we resolve the subscription gate
+  // for a signed-in user. This prevents a flash of the wrong screen.
+  const showSplash = !isHydrated || (hasUser && gateStatus === 'unknown');
 
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      {!isHydrated ? (
+      {showSplash ? (
         <View style={[styles.loading, { backgroundColor: colors.backgroundPrimary }]}>
           <ActivityIndicator size="large" color={colors.electricBlue} />
         </View>
@@ -184,8 +117,8 @@ function RootLayoutContent() {
           <Stack.Screen
             name="paywall"
             options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
+              animation: 'fade',
+              gestureEnabled: false,
             }}
           />
         </Stack>

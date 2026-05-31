@@ -1,3 +1,3 @@
-import { OnboardingSplashScreen } from '@/presentation/screens/onboarding';
+import { OnboardingFlowScreen } from '@/presentation/screens/onboarding';
 
-export default OnboardingSplashScreen;
+export default OnboardingFlowScreen;

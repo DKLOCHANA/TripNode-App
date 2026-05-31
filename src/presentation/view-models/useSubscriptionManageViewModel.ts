@@ -97,13 +97,14 @@ export function useSubscriptionManageViewModel() {
     }
   }, [user, queryClient, haptic, handleManageSubscription]);
 
-  // Handle cancellation - redirects to App Store subscription management
+  // Handle cancellation - redirects to App Store subscription management.
+  // Apple requires that paying users can reach the cancel path from the app.
   const handleCancelSubscription = useCallback(async () => {
     haptic.lightImpact();
 
     Alert.alert(
       'Cancel Subscription',
-      'To cancel your subscription, you\'ll be redirected to your App Store subscription settings.',
+      "To cancel your subscription, you'll be redirected to your App Store subscription settings.",
       [
         { text: 'Not Now', style: 'cancel' },
         {
@@ -113,30 +114,6 @@ export function useSubscriptionManageViewModel() {
       ]
     );
   }, [haptic, handleManageSubscription]);
-
-  // Handle downgrade to free (same as cancel)
-  const handleDowngradeToFree = useCallback(() => {
-    haptic.lightImpact();
-
-    Alert.alert(
-      'Downgrade to Free',
-      'Your Premium subscription will remain active until the end of your current billing period. After that, you\'ll be switched to the Free plan.\n\nYou\'ll be redirected to manage your subscription.',
-      [
-        { text: 'Keep Premium', style: 'cancel' },
-        {
-          text: 'Continue',
-          style: 'destructive',
-          onPress: handleManageSubscription,
-        },
-      ]
-    );
-  }, [haptic, handleManageSubscription]);
-
-  // Handle renewing expired subscription
-  const handleRenewSubscription = useCallback(() => {
-    haptic.lightImpact();
-    router.push('/paywall');
-  }, [router, haptic]);
 
   // Handle going back
   const handleGoBack = useCallback(() => {
@@ -195,8 +172,6 @@ export function useSubscriptionManageViewModel() {
     handleManageSubscription,
     handleOpenCustomerCenter,
     handleCancelSubscription,
-    handleDowngradeToFree,
-    handleRenewSubscription,
     handleRestorePurchases,
     handleGoBack,
   };

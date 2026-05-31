@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
   Pressable,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,13 @@ export function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const vm = usePaywallViewModel();
   const { colors } = useTheme();
+
+  // Hard paywall: block Android hardware back so the user cannot dismiss
+  // without completing or restoring a purchase.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   // Light theme colors for paywall (matches design)
   const paywallColors = {
@@ -51,15 +59,6 @@ export function PaywallScreen() {
           locations={[0, 0.6, 1]}
         />
       </View>
-
-      {/* Close Button */}
-      <Pressable
-        style={[styles.closeButton, { top: insets.top + spacing.sm }]}
-        onPress={vm.handleClose}
-        hitSlop={12}
-      >
-        <Ionicons name="close" size={28} color={paywallColors.textSecondary} />
-      </Pressable>
 
       <View
         style={[
@@ -255,15 +254,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: IMAGE_HEIGHT * 0.6,
-  },
-  closeButton: {
-    position: 'absolute',
-    left: spacing.md,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   content: {
     flex: 1,

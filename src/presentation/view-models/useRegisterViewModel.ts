@@ -1,6 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
+import {
+  getSavedOnboardingName,
+  clearSavedOnboardingName,
+} from '@/store/onboardingStore';
 import {
   validateRegisterForm,
   hasErrors,
@@ -17,6 +21,19 @@ export function useRegisterViewModel() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const { register, signInWithApple, loading, error: authError, clearError } = useAuthStore();
   const haptic = useHaptic();
+
+  // Prefill the name captured during onboarding for a seamless handoff.
+  useEffect(() => {
+    let active = true;
+    getSavedOnboardingName().then((saved) => {
+      if (active && saved) {
+        setName((current) => (current.trim().length === 0 ? saved : current));
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const clearFieldError = useCallback((field: string) => {
     setFieldErrors((prev) => {
@@ -54,6 +71,7 @@ export function useRegisterViewModel() {
     try {
       await register(name.trim(), email.trim(), password);
       haptic.success();
+      clearSavedOnboardingName();
       // Navigation is handled by auth listener in root layout
     } catch {
       haptic.error();
@@ -71,6 +89,7 @@ export function useRegisterViewModel() {
     try {
       await signInWithApple();
       haptic.success();
+      clearSavedOnboardingName();
     } catch {
       haptic.error();
     }

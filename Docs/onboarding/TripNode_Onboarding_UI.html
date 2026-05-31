@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TripNode — Onboarding Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--blue:#007AFF;--blue-d:#0055CC;--blue-s:#D6EAFF;--blue-p:#EBF4FF;
+--sky:#4FC3F7;--navy:#0A1628;--navy-m:#132240;
+--wh:#fff;--glass:rgba(255,255,255,.72);
+--tx:#0A1628;--tx-s:rgba(10,22,40,.55);--tx-m:rgba(10,22,40,.35);
+--grn:#34C759;--org:#FF9500;--gy:#F2F2F7;--gy-m:#E5E5EA;
+}
+html,body{background:var(--navy);color:var(--wh);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:linear-gradient(165deg,#0A1628 0%,#132240 40%,#1a3a5c 100%);min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(1.5px 1.5px at 15% 25%,rgba(79,195,247,.25),transparent),radial-gradient(1px 1px at 85% 15%,rgba(79,195,247,.2),transparent),radial-gradient(1.5px 1.5px at 45% 65%,rgba(79,195,247,.15),transparent),radial-gradient(1px 1px at 72% 82%,rgba(79,195,247,.2),transparent),radial-gradient(1px 1px at 30% 90%,rgba(79,195,247,.18),transparent);pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1}
+.hdr{max-width:1400px;margin:0 auto;padding:72px 32px 40px;text-align:center}
+.ey{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:var(--sky);padding:6px 16px;border:1px solid rgba(79,195,247,.35);border-radius:999px;margin-bottom:20px}
+.ht{font-family:'Playfair Display',serif;font-size:clamp(36px,6vw,64px);font-weight:400;line-height:1.06;letter-spacing:-.02em;color:var(--wh)}
+.ht em{font-style:italic;color:var(--sky)}
+.hs{font-size:15px;color:rgba(255,255,255,.45);margin-top:18px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.65}
+
+.act{max-width:1400px;margin:0 auto;padding:48px 32px}
+.ah{display:flex;align-items:baseline;gap:16px;border-top:1px solid rgba(79,195,247,.12);padding-top:28px;margin-bottom:44px;flex-wrap:wrap}
+.an{font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:var(--sky);letter-spacing:.12em;text-transform:uppercase}
+.at{font-family:'Playfair Display',serif;font-size:clamp(24px,3.5vw,36px);font-weight:400;color:var(--wh);letter-spacing:-.01em}
+.at em{font-style:italic;color:var(--sky)}
+.am{margin-left:auto;font-size:12px;color:rgba(255,255,255,.3)}
+
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:52px 28px}
+.pw{display:flex;flex-direction:column;align-items:center}
+.pc{margin-top:18px;text-align:center}
+.pc .n{font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--sky)}
+.pc .ph{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);margin-top:2px}
+.pc .d{font-family:'Playfair Display',serif;font-size:12px;font-style:italic;color:rgba(255,255,255,.5);margin-top:3px}
+
+.p{width:272px;height:588px;background:#000;border-radius:36px;padding:6px;box-shadow:0 32px 64px -20px rgba(0,0,0,.7),0 0 0 1px rgba(79,195,247,.08);position:relative}
+.s{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative;background:var(--wh);font-family:'DM Sans',system-ui,sans-serif;color:var(--tx);display:flex;flex-direction:column}
+.s::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:72px;height:18px;background:#000;border-radius:10px;z-index:30}
+.s::after{content:'';position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:88px;height:4px;background:rgba(0,0,0,.22);border-radius:2px;z-index:30}
+.s.dk{background:var(--navy)}.s.dk::after{background:rgba(255,255,255,.3)}
+.s.bl{background:var(--blue)}.s.bl::after{background:rgba(255,255,255,.35)}
+
+.sb{position:absolute;top:0;left:0;right:0;padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center;font-family:system-ui;font-size:10.5px;font-weight:700;z-index:20;color:var(--tx)}
+.sb.lt{color:#fff}
+.sr{display:flex;align-items:center;gap:4px}
+.bars{display:flex;gap:1.5px}.bars i{width:3px;height:7px;background:currentColor;border-radius:1px;display:block}.bars i:nth-child(4){opacity:.3}
+.bat{width:18px;height:8px;border:1.3px solid currentColor;border-radius:2px;position:relative}.bat::after{content:'';position:absolute;right:-3.5px;top:50%;transform:translateY(-50%);width:1.5px;height:3.5px;background:currentColor;border-radius:0 1px 1px 0}.bat i{display:block;width:58%;height:56%;background:currentColor;border-radius:.8px;margin:auto;margin-top:.8px}
+
+.ct{flex:1;padding:46px 16px 12px;overflow-y:auto;display:flex;flex-direction:column}
+.cv{justify-content:center}.hc{padding-bottom:6px}
+h3{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;line-height:1.18;letter-spacing:-.01em;color:var(--tx)}
+.h2{font-size:16px;font-weight:700;line-height:1.28;color:var(--tx)}
+.su{font-size:11.5px;color:var(--tx-s);margin-top:3px;line-height:1.4}
+.bd{font-size:12.5px;line-height:1.55;color:var(--tx-s);margin-top:9px}
+.cp{font-size:10px;color:var(--tx-m);line-height:1.4}
+.ac{color:var(--blue);font-weight:700}
+
+.ca{padding:8px 16px 26px;margin-top:auto}
+.btn{display:block;width:100%;padding:13px 0;background:var(--blue);color:#fff;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;letter-spacing:.01em;text-align:center}
+.btn:hover{background:var(--blue-d)}
+.btn-w{background:#fff;color:var(--blue)}.btn-w:hover{background:#f0f6ff}
+.ft{text-align:center;font-size:9.5px;color:var(--tx-m);margin-top:5px;line-height:1.4}
+.tc{position:absolute;bottom:26px;right:16px;font-size:11.5px;color:var(--tx-s);font-weight:500;z-index:5}
+.tc.lt{color:rgba(255,255,255,.4)}
+
+.op{background:var(--gy);border:1.5px solid var(--gy-m);border-radius:11px;padding:10px 12px;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--tx);cursor:pointer}
+.op.sl{border-color:var(--blue);background:var(--blue-p);color:var(--blue)}
+.cr{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.ch{padding:6px 11px;border-radius:18px;font-size:10.5px;font-weight:700;background:var(--gy);border:1.5px solid var(--gy-m);color:var(--tx);cursor:pointer}
+.ch.sl{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.if{width:100%;padding:11px 12px;border:1.5px solid var(--gy-m);border-radius:11px;font-size:13.5px;font-family:'DM Sans',sans-serif;background:var(--gy);color:var(--tx);margin-top:7px;outline:none}
+.if:focus{border-color:var(--blue);background:#fff}
+.if::placeholder{color:var(--tx-m)}
+
+.cd{background:var(--gy);border:1px solid var(--gy-m);border-radius:13px;padding:11px 12px;margin-top:7px}
+.cd-b{background:var(--blue-p);border-color:var(--blue-s)}
+
+.ti{display:flex;gap:9px;margin-top:8px;align-items:flex-start}
+.td{width:7px;height:7px;border-radius:50%;background:var(--blue);margin-top:4px;flex-shrink:0}
+.tt{font-size:12px;font-weight:800;color:var(--tx)}
+.ts{font-size:10px;color:var(--tx-s);margin-top:1px;line-height:1.3}
+.tm{font-size:9.5px;color:var(--tx-m);margin-top:1px;font-weight:700}
+
+.pf{max-width:1400px;margin:0 auto;padding:48px 32px;text-align:center;font-size:11px;color:rgba(255,255,255,.25);line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hdr">
+<div class="ey">Onboarding Flow</div>
+<h1 class="ht">TripNode<br><em>AI Travel Planner</em></h1>
+<p class="hs">33 screens from first tap to trial conversion. Every screen moves the user from curiosity to commitment.</p>
+</header>
+
+<!-- ══════════ ACT 1 ══════════ -->
+<section class="act">
+<div class="ah"><span class="an">Act I</span><h2 class="at"><em>Introduction</em></h2><span class="am">Screens 1–17 · Curious → Understood</span></div>
+<div class="g">
+
+<!-- S1 HOOK -->
+<div class="pw"><div class="p"><div class="s dk">
+<div class="sb lt"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="text-align:center">
+<div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:400;color:#fff;line-height:1.15">where to <em style="font-style:italic;color:var(--sky)">next</em>?</div>
+</div>
+<div class="tc lt">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 1</div><div class="ph">PHASE-01 · HOOK</div><div class="d">wanderlust in 2 seconds</div></div></div>
+
+<!-- S2 PROBLEM 1 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="padding:46px 18px">
+<h3>planning a trip shouldn't feel like a <em style="font-style:italic;color:var(--blue)">second job.</em></h3>
+<div class="bd" style="margin-top:16px;font-size:13.5px;line-height:1.6">15 tabs open. 3 conflicting blogs.<br>a budget that makes sense until you're actually there.<br><br>sound familiar?</div>
+</div>
+<div class="tc">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 2</div><div class="ph">PHASE-02 · PROBLEM</div><div class="d">name the pain</div></div></div>
+
+<!-- S3 PROBLEM 2 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="padding:46px 18px">
+<h3>you want to <em style="font-style:italic;color:var(--blue)">explore</em> — not research.</h3>
+<div class="bd" style="margin-top:16px;font-size:13.5px;line-height:1.6">but without a real plan, you waste time, overspend, and miss the places that actually matter.</div>
+</div>
+<div class="tc">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 3</div><div class="ph">PHASE-02 · PROBLEM</div><div class="d">deepen the frustration</div></div></div>
+
+<!-- S4 SOLUTION -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="padding:46px 18px">
+<h3>TripNode plans your entire trip in <em style="font-style:italic;color:var(--blue)">seconds.</em></h3>
+<div class="bd" style="margin-top:16px;font-size:13.5px;line-height:1.6">tell us where, when, and what you love.<br>our AI builds a day-by-day itinerary —<br>timed, budgeted, and mapped.</div>
+</div>
+<div class="tc">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 4</div><div class="ph">PHASE-03 · SOLUTION</div><div class="d">hope in one sentence</div></div></div>
+
+<!-- S5 IDENTITY -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:20px">first things first</div>
+<div class="su" style="font-size:13px;margin-top:5px">what should we call you?</div>
+<input class="if" style="margin-top:18px" value="Alex" readonly>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 5</div><div class="ph">PHASE-04 · IDENTITY</div><div class="d">name capture</div></div></div>
+
+<!-- S6 IDENTITY REACTION -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="text-align:center;padding:46px 22px">
+<h3 style="font-size:22px">nice to meet you, <span class="ac">Alex</span>. ✈️</h3>
+<div style="font-family:'Playfair Display',serif;font-size:18px;font-style:italic;color:var(--tx-s);margin-top:8px">let's figure out how you travel.</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 6</div><div class="ph">PHASE-04 · IDENTITY</div><div class="d">warm reaction</div></div></div>
+
+<!-- S7 BOMBSHELL Q -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">how do you usually plan a trip?</div>
+<div class="su">be honest.</div>
+<div class="op sl" style="margin-top:12px">📱 scroll TikTok and Instagram for hours</div>
+<div class="op">🔍 open 15 browser tabs and hope for the best</div>
+<div class="op">📋 copy someone else's itinerary</div>
+<div class="op">💸 pay a tour guide to figure it out</div>
+<div class="op">🤷 honestly? I just wing it</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 7</div><div class="ph">PHASE-06 · BOMBSHELL</div><div class="d">self-recognition</div></div></div>
+
+<!-- S8 BOMBSHELL REVEAL -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="padding:46px 18px">
+<h3 style="font-size:20px"><span class="ac">Alex</span>, the average traveler spends <em style="color:var(--blue);font-style:italic">9 hours</em> planning a single trip.</h3>
+<div class="bd" style="margin-top:18px;font-size:12.5px;line-height:1.7">9 hours researching places that are closed when you arrive.<br><br>budgets that don't add up until you're already there.<br><br>itineraries copied from strangers who travel nothing like you.<br><br><strong style="color:var(--tx)">what if those 9 hours became 2 minutes?</strong></div>
+</div>
+<div class="tc">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 8</div><div class="ph">PHASE-06 · BOMBSHELL</div><div class="d">the 9-hour truth</div></div></div>
+
+<!-- S9 BRIDGE -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="padding:46px 18px">
+<h3>it doesn't have to be <em style="font-style:italic;color:var(--blue)">this way.</em></h3>
+<div class="bd" style="margin-top:16px;font-size:13px;line-height:1.65">what if you just picked a place — and a complete, personalized plan appeared?<br><br>let's find out what kind of traveler you are.<br>it takes less than a minute.</div>
+</div>
+<div class="tc">tap to continue →</div>
+</div></div><div class="pc"><div class="n">SCREEN 9</div><div class="ph">PHASE-07 · BRIDGE</div><div class="d">pivot to possibility</div></div></div>
+
+<!-- S10 QB Q1 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc" style="padding-top:42px">
+<div class="h2" style="line-height:1.3">what matters most to you when you travel?</div>
+<div class="su">choose up to 3</div>
+<div class="cr" style="margin-top:10px">
+<div class="ch sl">🍜 Local food</div><div class="ch sl">📸 Photo spots</div><div class="ch">🏛️ Culture</div><div class="ch">🏖️ Beach</div><div class="ch sl">🎉 Nightlife</div><div class="ch">🥾 Off the path</div><div class="ch">💆 Wellness</div><div class="ch">🛍️ Shopping</div>
+</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 10</div><div class="ph">PHASE-08 · QB (Q1)</div><div class="d">travel interests</div></div></div>
+
+<!-- S11 QB Q2 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">what usually goes wrong on your trips?</div>
+<div class="op" style="margin-top:12px">💸 I always blow my budget</div>
+<div class="op sl">⏰ I waste time at overhyped tourist traps</div>
+<div class="op">🗺️ I miss the best spots</div>
+<div class="op">😫 I over-plan and it stops being fun</div>
+<div class="op">🤷 I wing it and regret it later</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 11</div><div class="ph">PHASE-08 · QB (Q2)</div><div class="d">pain point</div></div></div>
+
+<!-- S12 REFLECTION 1 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">sounds like you know what you want, <span class="ac">Alex</span>.</div>
+<div class="cd" style="margin-top:12px"><div style="font-size:11.5px;font-weight:800;color:var(--blue)">🍜 Local food</div><div class="cp" style="margin-top:1px">that's the stuff trips are made of</div></div>
+<div class="cd"><div style="font-size:11.5px;font-weight:800;color:var(--blue)">📸 Photo spots</div><div class="cp" style="margin-top:1px">we know just the spots</div></div>
+<div class="cd"><div style="font-size:11.5px;font-weight:800;color:var(--blue)">🎉 Nightlife</div><div class="cp" style="margin-top:1px">consider it handled</div></div>
+<div class="bd" style="margin-top:12px;font-size:11.5px;line-height:1.55">and the thing that keeps going wrong?<br><strong style="color:var(--tx)">wasting time at overhyped tourist traps.</strong><br><br>thousands of travelers started exactly here. let's fix that.</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 12</div><div class="ph">PHASE-08 · REFLECTION 1</div><div class="d">mirror their words</div></div></div>
+
+<!-- S13 QB Q3 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">what's your travel budget style?</div>
+<div class="op" style="margin-top:12px">🎒 Backpacker — every dollar counts</div>
+<div class="op sl">⚖️ Balanced — smart spending</div>
+<div class="op">💎 Comfort — pay more for less hassle</div>
+<div class="op">🤑 YOLO — worry about it later</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 13</div><div class="ph">PHASE-08 · QB (Q3)</div><div class="d">budget style</div></div></div>
+
+<!-- S14 QB Q4 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">have you ever come home from a trip feeling like you missed the best parts?</div>
+<div class="op sl" style="margin-top:18px;text-align:center;font-size:13.5px">yes — more times than I'd like to admit</div>
+<div class="op" style="text-align:center;font-size:13.5px">no — but I'm always afraid I will</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 14</div><div class="ph">PHASE-08 · QB (Q4)</div><div class="d">the deep question</div></div></div>
+
+<!-- S15 REFLECTION 2 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">we hear you, <span class="ac">Alex</span>.</div>
+<div class="bd" style="margin-top:12px;font-size:12px;line-height:1.6"><strong style="color:var(--tx)">wasting time at overhyped tourist traps</strong> — that's exactly what TripNode is built to solve.<br><br>you've felt it before. it won't happen again.<br><br><strong style="color:var(--tx)">your next trip will be different.</strong></div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 15</div><div class="ph">PHASE-08 · REFLECTION 2</div><div class="d">emotional mirror</div></div></div>
+
+<!-- S16 INSIGHT 1 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">thanks <span class="ac">Alex</span>. here's what we know about how you travel.</div>
+<div class="cd-b cd" style="margin-top:12px"><div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.1em">Where you want to go</div><div style="font-size:12px;font-weight:700;color:var(--tx);margin-top:3px">🍜 Local food · 📸 Photo spots · 🎉 Nightlife</div></div>
+<div class="cd-b cd"><div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.1em">What keeps tripping you up</div><div style="font-size:12px;font-weight:700;color:var(--tx);margin-top:3px">Wrong spots, wasted time</div></div>
+<div class="cd-b cd"><div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.1em">What's holding you back</div><div style="font-size:12px;font-weight:700;color:var(--tx);margin-top:3px">Fear of missing the best parts</div></div>
+<div class="bd" style="margin-top:12px;font-size:12px;text-align:center;font-weight:600;color:var(--tx)">let's build trips where none of that happens.</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 16</div><div class="ph">PHASE-10 · INSIGHT</div><div class="d">journey summary</div></div></div>
+
+<!-- S17 INSIGHT CHART -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">smart planning changes <em style="color:var(--blue);font-style:italic">everything.</em></div>
+<div style="margin-top:14px;background:var(--gy);border-radius:13px;padding:14px;height:130px;overflow:hidden">
+<svg viewBox="0 0 220 100" style="width:100%;height:100%">
+<line x1="10" y1="85" x2="210" y2="85" stroke="var(--gy-m)" stroke-width=".5"/>
+<path d="M10,70 Q60,65 90,50 Q130,30 170,20 L210,12" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M10,70 Q60,72 90,75 Q130,68 170,78 L210,80" fill="none" stroke="var(--gy-m)" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="170" y="10" font-size="6" fill="var(--blue)" font-weight="700" font-family="DM Sans">with TripNode</text>
+<text x="178" y="90" font-size="6" fill="var(--tx-m)" font-family="DM Sans">without</text>
+<text x="10" y="96" font-size="5" fill="var(--tx-m)" font-family="DM Sans">Day 1</text>
+<text x="197" y="96" font-size="5" fill="var(--tx-m)" font-family="DM Sans">Day 5</text>
+</svg>
+</div>
+<div class="bd" style="margin-top:12px;font-size:12px;text-align:center;line-height:1.6"><span class="ac">Alex</span>, that could be you.</div>
+</div>
+<div class="ca"><button class="btn">learn how TripNode works →</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 17</div><div class="ph">PHASE-10 · INSIGHT</div><div class="d">with vs without</div></div></div>
+
+</div></section>
+
+<!-- ══════════ ACT 2 ══════════ -->
+<section class="act">
+<div class="ah"><span class="an">Act II</span><h2 class="at"><em>Climax</em></h2><span class="am">Screens 18–23 · Excited → Peak</span></div>
+<div class="g">
+
+<!-- S18 HOW IT WORKS -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct" style="background:rgba(0,0,0,.35);justify-content:flex-end;padding:0">
+<div style="background:#fff;border-radius:18px 18px 0 0;padding:22px 16px 28px;position:relative">
+<div style="position:absolute;top:10px;right:12px;font-size:16px;color:var(--tx-m);cursor:pointer">✕</div>
+<div style="font-size:15px;font-weight:800;text-align:center;color:var(--tx);margin-bottom:16px">how it works</div>
+<div style="display:flex;align-items:flex-start;gap:9px;margin-top:12px"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div><div style="font-size:12.5px;font-weight:700;color:var(--tx)">pick a destination, dates, and interests</div></div>
+<div style="display:flex;align-items:flex-start;gap:9px;margin-top:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div><div style="font-size:12.5px;font-weight:700;color:var(--tx)">AI generates your full itinerary — every stop scheduled and costed</div></div>
+<div style="display:flex;align-items:flex-start;gap:9px;margin-top:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div><div style="font-size:12.5px;font-weight:700;color:var(--tx)">review, customize, and go — maps built in</div></div>
+<div style="text-align:center;font-size:11px;color:var(--tx-s);margin-top:14px;font-style:italic">from idea to itinerary, faster than you'd book a restaurant.</div>
+<button class="btn" style="margin-top:14px">try it now</button>
+</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 18</div><div class="ph">PHASE-11 · HOW IT WORKS</div><div class="d">3-step modal</div></div></div>
+
+<!-- S19 EXPERIENCE INPUT -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">let's plan a quick trip, <span class="ac">Alex</span>.</div>
+<div class="su" style="font-size:12px;margin-top:4px">pick a destination — anywhere in the world.</div>
+<input class="if" style="margin-top:18px;font-size:14px" value="Tokyo, Japan" readonly>
+</div>
+<div class="ca"><button class="btn">generate my trip ✨</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 19</div><div class="ph">PHASE-12 · EXPERIENCE</div><div class="d">destination input</div></div></div>
+
+<!-- S20 EXPERIENCE LOADING -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="text-align:center">
+<div style="width:72px;height:72px;border-radius:50%;border:3px solid var(--gy-m);border-top-color:var(--blue);margin:0 auto"></div>
+<div style="margin-top:18px;font-size:12.5px;font-weight:600;color:var(--tx)">planning your trip to <span class="ac">Tokyo</span>...</div>
+<div style="margin-top:8px;font-size:10.5px;color:var(--tx-s);line-height:1.7">✓ finding the best spots...<br>✓ building your schedule...<br>optimizing for budget...</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 20</div><div class="ph">PHASE-12 · EXPERIENCE</div><div class="d">generation loading</div></div></div>
+
+<!-- S21 ITINERARY REVEAL -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc" style="padding-top:40px">
+<div class="h2" style="line-height:1.25;font-size:15px">here's Day 1 in <span class="ac">Tokyo</span>, Alex.</div>
+<div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-top:10px">🌅 Morning</div>
+<div class="ti"><div class="td"></div><div><div class="tt">🏛️ Senso-ji Temple</div><div class="ts">Asakusa's ancient heart — arrive early</div><div class="tm">1h 30m · Free</div></div></div>
+<div class="ti"><div class="td" style="background:var(--sky)"></div><div><div class="tt">🛍️ Nakamise Street</div><div class="ts">Street food + souvenirs — try the melon pan</div><div class="tm">45m · ~$15</div></div></div>
+<div style="font-size:9px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-top:10px">☀️ Afternoon</div>
+<div class="ti"><div class="td"></div><div><div class="tt">🍣 Tsukiji Outer Market</div><div class="ts">Skip the tourist sushi — find the tamagoyaki stand</div><div class="tm">2h · ~$30</div></div></div>
+<div class="cp" style="margin-top:12px;text-align:center;font-weight:600;color:var(--tx);font-size:10.5px">this is just Day 1. the full trip covers every day.</div>
+<div class="cp" style="margin-top:6px;text-align:center;color:var(--org);font-weight:600;font-size:9px">⚠ Itineraries are AI-generated suggestions. Always verify details before your trip.</div>
+</div>
+<div class="ca"><button class="btn">save this trip ✓</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 21</div><div class="ph">PHASE-12 · EXPERIENCE</div><div class="d">Day 1 itinerary</div></div></div>
+
+<!-- S22 CONGRATS -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc cv" style="text-align:center">
+<div style="font-size:38px">✈️</div>
+<h3 style="font-size:22px;color:var(--blue);margin-top:8px">congratulations!</h3>
+<div class="su" style="font-size:12px;margin-top:6px">you just planned your first trip with TripNode.</div>
+<div class="cd" style="margin-top:16px;text-align:left"><div style="font-size:13px;font-weight:800">🗾 Tokyo, Japan</div><div class="cp" style="margin-top:3px">Day 1 of 3 · Senso-ji, Tsukiji, Shibuya...<br>💰 est. $90/day</div></div>
+<div class="bd" style="margin-top:12px;font-size:11.5px;text-align:center">saved in <strong style="color:var(--tx)">My Trips</strong> — open, share, or tweak anytime.</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 22</div><div class="ph">PHASE-13 · CONGRATS</div><div class="d">first trip complete</div></div></div>
+
+<!-- S23 STREAK + REVIEW -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct" style="position:relative">
+<div style="text-align:center;margin-top:36px"><div style="font-size:44px">✈️</div><div class="h2" style="margin-top:8px">your travel streak begins.</div></div>
+<div style="display:flex;justify-content:center;gap:8px;margin-top:16px">
+<div style="width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">1</div>
+<div style="width:34px;height:34px;border-radius:50%;background:var(--gy);color:var(--tx-m);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">2</div>
+<div style="width:34px;height:34px;border-radius:50%;background:var(--gy);color:var(--tx-m);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">3</div>
+<div style="width:34px;height:34px;border-radius:50%;background:var(--gy);color:var(--tx-m);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">4</div>
+<div style="width:34px;height:34px;border-radius:50%;background:var(--gy);color:var(--tx-m);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">5</div>
+</div>
+<div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:20px 18px 24px;box-shadow:0 -6px 24px rgba(0,0,0,.1);text-align:center">
+<div style="font-size:26px;margin-bottom:4px">✈️</div>
+<div style="font-size:13px;font-weight:800;color:var(--tx)">Enjoying TripNode?</div>
+<div style="font-size:10.5px;color:var(--tx-s);margin-top:2px">Tap a star to rate it on the App Store</div>
+<div style="font-size:26px;color:var(--org);margin-top:8px;letter-spacing:4px">☆ ☆ ☆ ☆ ☆</div>
+<div style="font-size:12px;color:var(--blue);font-weight:600;margin-top:8px;cursor:pointer">Not Now</div>
+</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 23</div><div class="ph">PHASE-14 · STREAK + REVIEW</div><div class="d">emotional peak</div></div></div>
+
+</div></section>
+
+<!-- ══════════ ACT 3 ══════════ -->
+<section class="act">
+<div class="ah"><span class="an">Act III</span><h2 class="at"><em>Conclusion</em></h2><span class="am">Screens 24–33 · Committed → Ready</span></div>
+<div class="g">
+
+<!-- S24 LOADING -->
+<div class="pw"><div class="p"><div class="s bl">
+<div class="sb lt"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="text-align:center">
+<div style="width:80px;height:80px;border-radius:50%;border:3.5px solid rgba(255,255,255,.2);border-top-color:#fff;margin:0 auto"></div>
+<div style="margin-top:22px;font-size:11.5px;color:rgba(255,255,255,.85);font-weight:600;line-height:1.8">✓ analyzing your travel style...<br>✓ matching destinations...<br>calibrating budget...</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 24</div><div class="ph">PHASE-15 · LOADING</div><div class="d">building the plan</div></div></div>
+
+<!-- S25 PLAN READY -->
+<div class="pw"><div class="p"><div class="s bl">
+<div class="sb lt"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv hc" style="text-align:center">
+<div style="font-size:56px;color:#fff">✓</div>
+<div style="font-size:18px;font-weight:700;color:#fff;margin-top:12px;line-height:1.3">Alex, your travel plan is ready.</div>
+</div>
+<div class="ca"><button class="btn btn-w">see my plan</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 25</div><div class="ph">PHASE-15 · PLAN READY</div><div class="d">checkmark moment</div></div></div>
+
+<!-- S26 SNAPSHOT -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3"><span class="ac">Alex</span>'s travel snapshot</div>
+<div class="su">based on your answers, here's your travel DNA:</div>
+<div class="cd" style="margin-top:10px"><div style="font-size:10.5px;font-weight:800;color:var(--tx)">🧭 Travel style</div><div style="margin-top:5px;height:5px;background:var(--gy-m);border-radius:3px;overflow:hidden"><div style="width:72%;height:100%;background:var(--blue);border-radius:3px"></div></div><div style="display:flex;justify-content:space-between;font-size:8.5px;color:var(--tx-m);margin-top:2px"><span>tourist</span><span>explorer</span></div></div>
+<div class="cd"><div style="font-size:10.5px;font-weight:800;color:var(--tx)">💰 Budget instinct</div><div style="font-size:12px;font-weight:700;color:var(--blue);margin-top:3px">⚖️ Balanced — smart spending</div></div>
+<div class="cd"><div style="font-size:10.5px;font-weight:800;color:var(--tx)">⚡ Planning confidence</div><div style="margin-top:5px;height:5px;background:var(--gy-m);border-radius:3px;overflow:hidden"><div style="width:35%;height:100%;background:var(--org);border-radius:3px"></div></div><div style="font-size:8.5px;color:var(--tx-m);margin-top:2px">room to grow</div></div>
+<div style="margin-top:12px;font-size:10.5px;font-weight:800;color:var(--tx)">💪 Strengths</div>
+<div class="cp" style="margin-top:3px;line-height:1.5">• you know what you want from a trip<br>• you're willing to try something new</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 26</div><div class="ph">PHASE-16 · SNAPSHOT</div><div class="d">travel DNA</div></div></div>
+
+<!-- S27 COMMITMENT Q -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">so <span class="ac">Alex</span> — how committed are you to making your next trip unforgettable?</div>
+<div class="op sl" style="margin-top:14px">🔥 Extremely Committed</div>
+<div class="op">💪 Very Committed</div>
+<div class="op">🤔 Somewhat Committed</div>
+<div class="op">🌱 A Little Committed</div>
+<div class="op">🪄 Just Trying It Out</div>
+</div>
+<div class="ca"><button class="btn">continue</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 27</div><div class="ph">PHASE-17 · COMMITMENT</div><div class="d">Cialdini commitment</div></div></div>
+
+<!-- S28 COMMITMENT RESPONSE -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv" style="text-align:center;padding:46px 20px">
+<div style="font-size:36px;margin-bottom:8px">🔥</div>
+<h3 style="font-size:20px">that's the energy, <span class="ac">Alex</span>.</h3>
+<div class="bd" style="margin-top:12px;font-size:13px;line-height:1.6;text-align:center">your next trip won't just be good — it'll be the one you tell everyone about.</div>
+</div>
+<div class="ca"><button class="btn">done ✓</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 28</div><div class="ph">PHASE-17 · COMMITMENT</div><div class="d">dynamic response</div></div></div>
+
+<!-- S29 PLAN REVEAL -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc" style="padding-top:40px">
+<div class="h2" style="line-height:1.25;font-size:14px"><span class="ac">Alex</span>, by <strong>June 15</strong> you could have your next trip ready to go.</div>
+<div style="display:flex;gap:6px;margin-top:12px;text-align:center">
+<div style="flex:1;background:var(--blue-p);border-radius:10px;padding:10px 4px"><div style="font-size:18px">🗺️</div><div style="font-size:9px;font-weight:700;color:var(--tx);margin-top:3px;line-height:1.2">every day<br>scheduled</div></div>
+<div style="flex:1;background:var(--blue-p);border-radius:10px;padding:10px 4px"><div style="font-size:18px">💰</div><div style="font-size:9px;font-weight:700;color:var(--tx);margin-top:3px;line-height:1.2">budget<br>built in</div></div>
+<div style="flex:1;background:var(--blue-p);border-radius:10px;padding:10px 4px"><div style="font-size:18px">⏱️</div><div style="font-size:9px;font-weight:700;color:var(--tx);margin-top:3px;line-height:1.2">zero<br>wasted hrs</div></div>
+</div>
+<div style="font-size:10px;font-weight:700;color:var(--tx);margin-top:12px">how we'll get you there:</div>
+<div style="margin-top:6px;font-size:10px;color:var(--tx-s);line-height:1.5">
+<strong style="color:var(--tx)">🗺️ AI Itinerary</strong> — full plan from a single prompt<br>
+<strong style="color:var(--tx)">🏛️ Smart Attractions</strong> — matched to your interests<br>
+<strong style="color:var(--tx)">📍 Maps</strong> — tap any stop to navigate<br>
+<strong style="color:var(--tx)">📋 My Trips</strong> — saved and shareable
+</div>
+</div>
+<div class="ca"><button class="btn">start planning ✈️</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 29</div><div class="ph">PHASE-18 · PLAN REVEAL</div><div class="d">the transformation</div></div></div>
+
+<!-- S30 SOCIAL PROOF -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">TripNode was built for travelers like you, <span class="ac">Alex</span>.</div>
+<div class="su">reviews from real travelers.</div>
+<div style="text-align:center;margin-top:12px"><div style="font-size:11px;font-weight:800;color:var(--tx)">🏆 the smartest way to plan a trip</div><div style="font-size:12px;color:var(--org);margin-top:2px">★★★★★</div><div style="font-size:9.5px;color:var(--tx-m);margin-top:1px">✈️ + 25,000 trips planned</div></div>
+<div class="cd" style="margin-top:10px;border-left:3px solid var(--blue)"><div style="font-size:10px;color:var(--org)">★★★★★</div><div style="font-size:11px;font-weight:800;color:var(--tx);margin-top:2px">BEST TRIP I'VE EVER TAKEN.</div><div class="cp" style="margin-top:2px;line-height:1.45">"TripNode gave me a 5-day Tokyo plan in 2 minutes that was better than anything I'd found in hours."</div></div>
+<div class="cd" style="border-left:3px solid var(--blue)"><div style="font-size:10px;color:var(--org)">★★★★★</div><div style="font-size:11px;font-weight:800;color:var(--tx);margin-top:2px">WHY DIDN'T THIS EXIST SOONER.</div><div class="cp" style="margin-top:2px;line-height:1.45">"Planned a Bali trip for me and my girlfriend. Every spot was walking distance. Budget was spot on."</div></div>
+</div>
+<div class="ca"><button class="btn">join TripNode ✈️</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 30</div><div class="ph">PHASE-19 · SOCIAL PROOF</div><div class="d">real travelers</div></div></div>
+
+<!-- S31 PERMISSIONS -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc">
+<div class="h2" style="margin-top:12px;line-height:1.3">allow TripNode to send you notifications</div>
+<div class="su">so you never miss a beat on your trip</div>
+<div style="background:var(--gy);border-radius:13px;padding:10px 11px;margin-top:16px;border:1px solid var(--gy-m)">
+<div style="display:flex;align-items:center;gap:5px"><span style="font-size:12px">✈️</span><span style="font-size:10px;font-weight:800;color:var(--tx)">TripNode</span><span style="font-size:9px;color:var(--tx-m);margin-left:auto">now</span></div>
+<div style="font-size:11.5px;color:var(--tx);margin-top:3px;font-weight:600;line-height:1.35">Your trip to Tokyo starts tomorrow!<br><span style="color:var(--tx-s);font-weight:400">Open your Day 1 itinerary →</span></div>
+</div>
+<div class="bd" style="margin-top:14px;font-size:11.5px;text-align:center">trip reminders, travel tips, and departure alerts — only what matters.</div>
+</div>
+<div class="ca"><button class="btn">allow</button></div>
+</div></div><div class="pc"><div class="n">SCREEN 31</div><div class="ph">PHASE-20 · PERMISSIONS</div><div class="d">notification pre-screen</div></div></div>
+
+<!-- S32 PAYWALL 1 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct hc" style="padding-top:40px">
+<div class="h2" style="line-height:1.25;font-size:15px">travel smarter, <span class="ac">Alex</span>. not harder.</div>
+<div style="font-size:9.5px;font-weight:700;color:var(--tx);margin-top:10px">here's what your first 3 days look like:</div>
+<div style="display:flex;align-items:flex-start;gap:8px;margin-top:8px"><div style="font-size:16px">🗺️</div><div><div style="font-size:10.5px;font-weight:800;color:var(--tx)">day 1 — plan your dream trip</div></div></div>
+<div style="display:flex;align-items:flex-start;gap:8px;margin-top:8px"><div style="font-size:16px">🏛️</div><div><div style="font-size:10.5px;font-weight:800;color:var(--tx)">day 2 — customize and make it yours</div></div></div>
+<div style="display:flex;align-items:flex-start;gap:8px;margin-top:8px"><div style="font-size:16px">📍</div><div><div style="font-size:10.5px;font-weight:800;color:var(--tx)">day 3 — maps open, you're ready to go</div></div></div>
+<div style="margin-top:12px;font-size:11px;font-weight:700;color:var(--grn);text-align:center">✓ No Payment Due Now</div>
+</div>
+<div class="ca">
+<button class="btn">try for $0.00</button>
+<div class="ft">Annual: $49.99/yr ($0.96/week) — BEST VALUE<br>Monthly: $5.99/mo</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 32</div><div class="ph">PHASE-21 · PAYWALL</div><div class="d">value + trial</div></div></div>
+
+<!-- S33 PAYWALL 2 -->
+<div class="pw"><div class="p"><div class="s">
+<div class="sb"><span>9:41</span><span class="sr"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="bat"><i></i></span></span></div>
+<div class="ct cv hc" style="text-align:center;padding:46px 20px">
+<div style="position:absolute;top:44px;left:16px;font-size:12px;color:var(--blue);font-weight:600;cursor:pointer">← back</div>
+<div style="font-size:44px;margin-bottom:8px">🔔</div>
+<h3 style="font-size:18px;line-height:1.3">we'll send you a reminder before your free trial ends</h3>
+<div class="bd" style="margin-top:12px;font-size:12px;text-align:center;line-height:1.55">we'll let you know one day before you're charged. cancel anytime.</div>
+<div style="margin-top:16px;font-size:11px;font-weight:700;color:var(--grn)">✓ No Payment Due Now</div>
+</div>
+<div class="ca">
+<button class="btn">continue for FREE</button>
+<div class="ft">Annual: $49.99/yr ($0.96/week) — BEST VALUE<br>Monthly: $5.99/mo</div>
+</div>
+</div></div><div class="pc"><div class="n">SCREEN 33</div><div class="ph">PHASE-21 · PAYWALL</div><div class="d">trial reminder</div></div></div>
+
+</div></section>
+
+<footer class="pf">
+TripNode Onboarding Flow · 33 screens · Generated against ONBOARDING_GENERATOR.md v2.0<br>
+Demo tokens: Alex (USER_NAME) · Tokyo, Japan (DESTINATION) · June 15 (TARGET_DATE)
+</footer>
+
+</div>
+</body>
+</html>

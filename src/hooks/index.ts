@@ -9,6 +9,7 @@ export { useActivityPhoto } from './useActivityPhoto';
 export { useTripCardPhoto } from './useTripCardPhoto';
 export { useAuth } from './useAuth';
 export { useSubscriptionStatus } from './useSubscriptionStatus';
+export { useSubscriptionGate } from './useSubscriptionGate';
 export { useGenerateTrip } from './useGenerateTrip';
 export { usePlacesAutocomplete } from './usePlacesAutocomplete';
 export { useNetworkStatus } from './useNetworkStatus';

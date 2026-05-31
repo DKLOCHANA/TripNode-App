@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { EXPO_PUBLIC_API_BASE_URL } from '@env';
 import { SecureStoreService } from '@/data/sources/local/secureStore';
 import {
   DomainError,
@@ -7,8 +6,7 @@ import {
   AuthError,
 } from '@/errors/DomainError';
 
-// API base URL from environment - fallback to empty string if not defined
-const API_BASE_URL = EXPO_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
 /**
  * Centralized Axios client with interceptors for:

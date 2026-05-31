@@ -2,7 +2,7 @@
   "expo": {
     "name": "TripNode",
     "slug": "tripnode",
-    "version": "1.1.0",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -32,7 +32,7 @@
           { "SKAdNetworkIdentifier": "hs6bdukanm.skadnetwork" }
         ]
       },
-      "buildNumber": "14",
+      "buildNumber": "15",
       "appleTeamId": "CLNUVH5GRA"
     },
     "plugins": [
@@ -47,6 +47,12 @@
         "expo-tracking-transparency",
         {
           "userTrackingPermission": "This allows TripNode to provide you with a more personalized experience and measure the effectiveness of our campaigns."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#0A84FF"
         }
       ]
     ],

@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from './useDebounce';
-import { EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY } from '@env';
 import { queryKeys } from '@/lib/queryKeys';
 import { PLACES_DEBOUNCE_MS } from '@/lib/constants';
+
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY;
 
 /**
  * Google Places autocomplete API interface
@@ -30,7 +31,7 @@ async function fetchPlaceSuggestions(
   query: string,
   sessionToken: string
 ): Promise<PlacePrediction[]> {
-  if (!EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY || !query || query.length < 3) {
+  if (!GOOGLE_PLACES_API_KEY || !query || query.length < 3) {
     return [];
   }
 
@@ -39,7 +40,7 @@ async function fetchPlaceSuggestions(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Goog-Api-Key': EXPO_PUBLIC_FIREBASE_GOOGLE_PLACES_API_KEY,
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
       },
       body: JSON.stringify({
         input: query,

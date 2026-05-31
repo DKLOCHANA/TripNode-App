@@ -13,6 +13,12 @@ import {
 } from '@/data/sources/local/secureStore';
 import { type DomainError, normalizeFirebaseError } from '@/errors/DomainError';
 import { appsFlyerService } from '@/services/appsFlyerService';
+import { DeleteAccountUseCase } from '@/domain/use-cases/account/DeleteAccountUseCase';
+import { authRepository } from '@/data/repositories/AuthRepository';
+import { userRepository } from '@/data/repositories/UserRepository';
+import { tripRepository } from '@/data/repositories/TripRepository';
+import * as notificationService from '@/services/notificationService';
+import { useNotificationStore } from '@/store/notificationStore';
 
 // App User type (stored locally)
 export interface AppUser {
@@ -33,6 +39,12 @@ interface AuthState {
   register: (name: string, email: string, password: string) => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * Permanently delete the account + all data (Firestore + Auth + local).
+   * Throws an error with `requiresRecentLogin: true` if Firebase needs a
+   * fresh sign-in before it will delete the credential.
+   */
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
   clearUser: () => void;
   init: () => () => void;
@@ -149,6 +161,53 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err: any) {
       const domainError = normalizeFirebaseError(err.code);
       set({ error: domainError, loading: false });
+    }
+  },
+
+  deleteAccount: async () => {
+    const userId = get().user?.uid;
+    if (!userId) {
+      throw new Error('No authenticated user to delete');
+    }
+
+    set({ loading: true, error: null });
+
+    const useCase = new DeleteAccountUseCase({
+      deleteAllTripsForUser: (uid) => tripRepository.deleteAllForUser(uid),
+      deleteUserProfile: (uid) => userRepository.deleteProfile(uid),
+      deleteAuthAccount: () => authRepository.deleteAccount(),
+    });
+
+    try {
+      // Cascade: Firestore trips → profile → Firebase Auth credential.
+      await useCase.execute(userId);
+
+      // Account is gone — wipe every local trace.
+      await SecureStoreService.clearAll();
+      try {
+        await notificationService.cancelAll();
+        await useNotificationStore.getState().setEnabled(false);
+      } catch {
+        // Non-fatal — the account is already deleted.
+      }
+
+      set({ user: null, loading: false });
+    } catch (err: any) {
+      set({ loading: false });
+
+      // Stale session — Firebase refuses to delete the credential until the
+      // user re-authenticates. Nothing was deleted; surface a typed signal.
+      if (err?.code === 'auth/requires-recent-login') {
+        const reAuthError = {
+          ...normalizeFirebaseError('auth/requires-recent-login'),
+          requiresRecentLogin: true as const,
+        };
+        throw reAuthError;
+      }
+
+      const domainError = normalizeFirebaseError(err?.code ?? '');
+      set({ error: domainError });
+      throw domainError;
     }
   },
 

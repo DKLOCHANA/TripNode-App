@@ -16,6 +16,7 @@ import { Typography } from '@/presentation/components/ui/Typography';
 import { GlassContainer } from '@/presentation/components/ui/GlassContainer';
 import { Button } from '@/presentation/components/ui/Button';
 import { useProfileViewModel } from '@/presentation/view-models/useProfileViewModel';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useTheme } from '@/theme/ThemeContext';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
@@ -25,6 +26,7 @@ import { shadows } from '@/theme/shadows';
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const vm = useProfileViewModel();
+  const notifications = useNotifications();
   const { colors, isDark, toggleTheme } = useTheme();
 
   const logoutButtonStyle = {
@@ -116,13 +118,11 @@ export function ProfileScreen() {
             {vm.userEmail}
           </Typography>
 
-          {vm.subscriptionTier === 'pro' && (
-            <View style={proBadgeStyle}>
-              <Typography variant="caption2" weight="bold" color={colors.electricBlue}>
-                PRO
-              </Typography>
-            </View>
-          )}
+          <View style={proBadgeStyle}>
+            <Typography variant="caption2" weight="bold" color={colors.electricBlue}>
+              PRO
+            </Typography>
+          </View>
         </View>
 
         {/* Subscription Section */}
@@ -134,35 +134,21 @@ export function ProfileScreen() {
           <View style={styles.subscriptionRow}>
             <View style={styles.subscriptionInfo}>
               <Typography variant="body" weight="semiBold" color={colors.textPrimary}>
-                {vm.isPro ? 'TripNode Premium' : vm.isExpired ? 'Subscription Expired' : 'Free Plan'}
+                TripNode Premium
               </Typography>
-              {vm.subscriptionExpiry && vm.isPro && (
+              {vm.subscriptionExpiry && (
                 <Typography variant="caption1" color={colors.textSecondary}>
                   {vm.renewsAutomatically ? 'Renews' : 'Expires'} {vm.subscriptionExpiry}
                 </Typography>
               )}
-              {vm.isExpired && (
-                <Typography variant="caption1" color={colors.error}>
-                  Expired {vm.subscriptionExpiry}
-                </Typography>
-              )}
             </View>
 
-            {vm.isPro ? (
-              <Button
-                title="Manage"
-                variant="secondary"
-                size="small"
-                onPress={vm.handleManageSubscription}
-              />
-            ) : (
-              <Button
-                title={vm.isExpired ? 'Renew' : 'Upgrade'}
-                variant="primary"
-                size="small"
-                onPress={vm.handleUpgradeToPro}
-              />
-            )}
+            <Button
+              title="Manage"
+              variant="secondary"
+              size="small"
+              onPress={vm.handleManageSubscription}
+            />
           </View>
         </GlassContainer>
 
@@ -192,6 +178,38 @@ export function ProfileScreen() {
               ios_backgroundColor="#767577"
             />
           </View>
+        </GlassContainer>
+
+        {/* Notifications Section */}
+        <GlassContainer style={styles.section}>
+          <Typography variant="caption1" weight="semiBold" color={colors.textSecondary} style={styles.sectionTitle}>
+            NOTIFICATIONS
+          </Typography>
+
+          <View style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons
+                name="notifications-outline"
+                size={20}
+                color={colors.electricBlue}
+                style={styles.settingsIcon}
+              />
+              <Typography variant="body" color={colors.textPrimary}>
+                Trip Reminders
+              </Typography>
+            </View>
+            <Switch
+              value={notifications.enabled}
+              onValueChange={notifications.toggle}
+              disabled={!notifications.isHydrated}
+              trackColor={{ false: '#767577', true: '#0A84FF' }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#767577"
+            />
+          </View>
+          <Typography variant="caption2" color={colors.textTertiary}>
+            Departure countdowns and a reminder the morning your trip begins.
+          </Typography>
         </GlassContainer>
 
         {/* Information Section */}

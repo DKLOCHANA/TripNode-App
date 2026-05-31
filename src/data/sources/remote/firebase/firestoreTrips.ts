@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   deleteDoc,
+  writeBatch,
   query,
   where,
   orderBy,
@@ -57,4 +58,25 @@ export async function getTripFromFirebase(tripId: string): Promise<Itinerary | n
 export async function deleteTripFromFirebase(tripId: string): Promise<void> {
   const tripRef = doc(db, TRIPS_COLLECTION, tripId);
   await deleteDoc(tripRef);
+}
+
+/**
+ * Permanently delete every trip belonging to a user (account deletion).
+ * Must run while the user is still authenticated (Firestore rules).
+ */
+export async function deleteAllTripsFromFirebase(userId: string): Promise<void> {
+  const tripsRef = collection(db, TRIPS_COLLECTION);
+  const snapshot = await getDocs(query(tripsRef, where('userId', '==', userId)));
+
+  if (snapshot.empty) return;
+
+  // Chunk into batches (Firestore hard limit is 500 writes per batch).
+  const BATCH_LIMIT = 450;
+  for (let i = 0; i < snapshot.docs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    snapshot.docs
+      .slice(i, i + BATCH_LIMIT)
+      .forEach((docSnap) => batch.delete(docSnap.ref));
+    await batch.commit();
+  }
 }
