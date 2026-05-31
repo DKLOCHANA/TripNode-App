@@ -22,14 +22,30 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to help you find places for your trips",
         "NSUserTrackingUsageDescription": "This allows TripNode to provide you with a more personalized experience and measure the effectiveness of our campaigns.",
         "SKAdNetworkItems": [
-          { "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork" },
-          { "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork" },
-          { "SKAdNetworkIdentifier": "p78axxw29g.skadnetwork" },
-          { "SKAdNetworkIdentifier": "cp8zw746q7.skadnetwork" },
-          { "SKAdNetworkIdentifier": "c6k4g5qg8m.skadnetwork" },
-          { "SKAdNetworkIdentifier": "s39g8k73mm.skadnetwork" },
-          { "SKAdNetworkIdentifier": "3qy4746246.skadnetwork" },
-          { "SKAdNetworkIdentifier": "hs6bdukanm.skadnetwork" }
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "p78axxw29g.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "cp8zw746q7.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "c6k4g5qg8m.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "s39g8k73mm.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "3qy4746246.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "hs6bdukanm.skadnetwork"
+          }
         ]
       },
       "buildNumber": "15",
@@ -59,12 +75,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "2f48bde9-60e9-4510-b487-1447d031f3b9"
+        "projectId": "c3d09756-b3f0-43b0-9ef1-882d8a5d03c8"
       }
     },
-    "owner": "kavindu_k",
+    "owner": "lochanaclaudedev",
     "android": {
-      "package": "com.tripnode.app"
+      "package": "com.tripnode.app",
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID"
+      ]
     }
   }
 }
