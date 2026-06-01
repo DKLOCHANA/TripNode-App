@@ -7,9 +7,11 @@ import {
   Modal,
   TextInput,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
@@ -17,57 +19,130 @@ import { GlassContainer } from '@/presentation/components/ui/GlassContainer';
 import { Button } from '@/presentation/components/ui/Button';
 import { useProfileViewModel } from '@/presentation/view-models/useProfileViewModel';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useTheme } from '@/theme/ThemeContext';
+import { useTheme, type ColorScheme } from '@/theme/ThemeContext';
+import { gradients } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
 import { typography } from '@/theme/typography';
 import { shadows } from '@/theme/shadows';
+
+// The premium card is a fixed dark surface in both themes, so its content
+// colours are constant (white text + white translucency over the navy
+// gradient) — mirroring the local-palette pattern used by the paywall screen.
+const PREMIUM_CARD = {
+  title: '#FFFFFF',
+  subtitle: 'rgba(255,255,255,0.55)',
+  accent: '#5BA3F9',
+  buttonBg: 'rgba(255,255,255,0.15)',
+} as const;
+
+/** A single rounded stat tile (Trips / Countries / Activities). */
+function StatTile({ value, label }: { value: number; label: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.statTile, cardSurface(colors)]}>
+      <Typography variant="title2" weight="bold" color={colors.textPrimary}>
+        {value}
+      </Typography>
+      <Typography variant="caption1" color={colors.textSecondary} style={styles.statLabel}>
+        {label}
+      </Typography>
+    </View>
+  );
+}
+
+/** Brand-tinted rounded icon chip used at the start of settings rows. */
+function IconChip({ name }: { name: React.ComponentProps<typeof Ionicons>['name'] }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.iconChip, { backgroundColor: colors.electricBlueDim }]}>
+      <Ionicons name={name} size={16} color={colors.electricBlue} />
+    </View>
+  );
+}
+
+/** A settings row with an icon chip, label (+ optional sub-label) and a Switch. */
+function ToggleRow({
+  icon,
+  label,
+  sublabel,
+  value,
+  onValueChange,
+  disabled,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  sublabel?: string;
+  value: boolean;
+  onValueChange: (next: boolean) => void;
+  disabled?: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <IconChip name={icon} />
+        <View style={styles.rowTextWrap}>
+          <Typography variant="callout" color={colors.textPrimary}>
+            {label}
+          </Typography>
+          {sublabel ? (
+            <Typography variant="caption1" color={colors.textTertiary} style={styles.rowSub}>
+              {sublabel}
+            </Typography>
+          ) : null}
+        </View>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        trackColor={{ false: colors.backgroundTertiary, true: colors.electricBlue }}
+        thumbColor={colors.white}
+        ios_backgroundColor={colors.backgroundTertiary}
+      />
+    </View>
+  );
+}
+
+/** A tappable settings row with an icon chip, label and a trailing chevron. */
+function LinkRow({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      onPress={onPress}
+    >
+      <View style={styles.rowLeft}>
+        <IconChip name={icon} />
+        <Typography variant="callout" color={colors.textPrimary}>
+          {label}
+        </Typography>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+    </Pressable>
+  );
+}
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const vm = useProfileViewModel();
   const notifications = useNotifications();
   const { colors, isDark, toggleTheme } = useTheme();
-
-  const logoutButtonStyle = {
-    backgroundColor: isDark ? colors.backgroundSecondary : colors.white,
-    borderColor: '#FFFFFF',
-    borderWidth: 1,
-    ...shadows.md,
-  };
-
-  const deleteButtonStyle = {
-    backgroundColor: isDark ? colors.backgroundSecondary : colors.white,
-    borderColor: '#FFFFFF',
-    borderWidth: 1,
-    ...shadows.md,
-  };
+  const router = useRouter(); // TEMP: paywall test button
 
   const scrollContentStyle = [
     styles.scrollContent,
-    { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xxxl },
+    { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.xxxl },
   ];
-
-  const containerStyle = [styles.container, { backgroundColor: colors.backgroundPrimary }];
-
-  const avatarStyle = [styles.avatar, { borderColor: colors.electricBlue }];
-
-  const avatarFallbackStyle = [
-    styles.avatarFallback,
-    { backgroundColor: colors.electricBlueDim, borderColor: colors.electricBlue },
-  ];
-
-  const avatarBadgeStyle = [
-    styles.avatarBadge,
-    { backgroundColor: colors.electricBlue, borderColor: colors.backgroundPrimary },
-  ];
-
-  const proBadgeStyle = [
-    styles.proBadge,
-    { backgroundColor: colors.electricBlueDim, borderColor: colors.electricBlue },
-  ];
-
-  const rowDividerStyle = [styles.rowDivider, { backgroundColor: colors.glassBorder }];
 
   const deleteInputStyle = [
     styles.deleteInput,
@@ -79,173 +154,163 @@ export function ProfileScreen() {
   ];
 
   return (
-    <View style={containerStyle}>
+    <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
+        {/* Page title */}
+        <Typography variant="title1" weight="bold" color={colors.textPrimary} style={styles.pageTitle}>
+          Profile
+        </Typography>
+
+        {/* Identity card */}
+        <View style={[styles.identityCard, cardSurface(colors)]}>
           <Pressable style={styles.avatarContainer} onPress={vm.handleAvatarPress}>
             {vm.userPhotoURL ? (
               <Image
                 source={{ uri: vm.userPhotoURL }}
-                style={avatarStyle}
+                style={styles.avatar}
                 contentFit="cover"
                 cachePolicy="disk"
               />
             ) : (
-              <View style={avatarFallbackStyle}>
-                <Typography variant="title1" weight="bold" color={colors.electricBlue}>
+              <LinearGradient
+                colors={gradients.brand}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatar}
+              >
+                <Typography variant="title2" weight="bold" color={colors.white}>
                   {vm.userInitials}
                 </Typography>
-              </View>
+              </LinearGradient>
             )}
-            <View style={avatarBadgeStyle}>
+            <View style={[styles.avatarBadge, { backgroundColor: colors.backgroundPrimary }]}>
               <Ionicons
                 name={vm.hasLocalPhoto ? 'pencil' : 'camera'}
-                size={14}
-                color={colors.white}
+                size={12}
+                color={colors.textSecondary}
               />
             </View>
           </Pressable>
 
-          <Typography variant="title2" weight="bold" style={styles.userName} color={colors.textPrimary}>
-            {vm.userName}
-          </Typography>
-          <Typography variant="footnote" color={colors.textSecondary}>
-            {vm.userEmail}
-          </Typography>
-
-          <View style={proBadgeStyle}>
-            <Typography variant="caption2" weight="bold" color={colors.electricBlue}>
-              PRO
+          <View style={styles.identityText}>
+            <View style={styles.nameRow}>
+              <Typography variant="title3" weight="semiBold" color={colors.textPrimary} numberOfLines={1}>
+                {vm.userName}
+              </Typography>
+              <View style={[styles.proBadge, { backgroundColor: colors.electricBlue }]}>
+                <Typography variant="caption2" weight="bold" color={colors.white}>
+                  PRO
+                </Typography>
+              </View>
+            </View>
+            <Typography variant="footnote" color={colors.textSecondary} numberOfLines={1}>
+              {vm.userEmail}
             </Typography>
           </View>
         </View>
 
-        {/* Subscription Section */}
-        <GlassContainer style={styles.section}>
-          <Typography variant="caption1" weight="semiBold" color={colors.textSecondary} style={styles.sectionTitle}>
-            SUBSCRIPTION
-          </Typography>
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <StatTile value={vm.tripsCount} label="Trips" />
+          <StatTile value={vm.countriesCount} label="Countries" />
+          <StatTile value={vm.activitiesCount} label="Activities" />
+        </View>
 
-          <View style={styles.subscriptionRow}>
-            <View style={styles.subscriptionInfo}>
-              <Typography variant="body" weight="semiBold" color={colors.textPrimary}>
+        {/* Premium card */}
+        <LinearGradient
+          colors={gradients.premium}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.premiumCard}
+        >
+          <View style={styles.premiumInfo}>
+            <View style={styles.premiumTitleRow}>
+              <Ionicons name="diamond" size={14} color={PREMIUM_CARD.accent} />
+              <Typography variant="subheadline" weight="semiBold" color={PREMIUM_CARD.title}>
                 TripNode Premium
               </Typography>
-              {vm.subscriptionExpiry && (
-                <Typography variant="caption1" color={colors.textSecondary}>
-                  {vm.renewsAutomatically ? 'Renews' : 'Expires'} {vm.subscriptionExpiry}
-                </Typography>
-              )}
             </View>
-
-            <Button
-              title="Manage"
-              variant="secondary"
-              size="small"
-              onPress={vm.handleManageSubscription}
-            />
-          </View>
-        </GlassContainer>
-
-        {/* Appearance Section */}
-        <GlassContainer style={styles.section}>
-          <Typography variant="caption1" weight="semiBold" color={colors.textSecondary} style={styles.sectionTitle}>
-            APPEARANCE
-          </Typography>
-
-          <View style={styles.settingsRow}>
-            <View style={styles.settingsRowLeft}>
-              <Ionicons
-                name={isDark ? 'moon' : 'sunny'}
-                size={20}
-                color={colors.electricBlue}
-                style={styles.settingsIcon}
-              />
-              <Typography variant="body" color={colors.textPrimary}>
-                {isDark ? 'Dark Mode' : 'Light Mode'}
+            {vm.subscriptionExpiry ? (
+              <Typography variant="caption1" color={PREMIUM_CARD.subtitle} style={styles.premiumSub}>
+                {vm.renewsAutomatically ? 'Renews' : 'Expires'} {vm.subscriptionExpiry}
               </Typography>
-            </View>
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: '#767577', true: '#0A84FF' }}
-              thumbColor="#FFFFFF"
-              ios_backgroundColor="#767577"
-            />
+            ) : null}
           </View>
-        </GlassContainer>
-
-        {/* Notifications Section */}
-        <GlassContainer style={styles.section}>
-          <Typography variant="caption1" weight="semiBold" color={colors.textSecondary} style={styles.sectionTitle}>
-            NOTIFICATIONS
-          </Typography>
-
-          <View style={styles.settingsRow}>
-            <View style={styles.settingsRowLeft}>
-              <Ionicons
-                name="notifications-outline"
-                size={20}
-                color={colors.electricBlue}
-                style={styles.settingsIcon}
-              />
-              <Typography variant="body" color={colors.textPrimary}>
-                Trip Reminders
-              </Typography>
-            </View>
-            <Switch
-              value={notifications.enabled}
-              onValueChange={notifications.toggle}
-              disabled={!notifications.isHydrated}
-              trackColor={{ false: '#767577', true: '#0A84FF' }}
-              thumbColor="#FFFFFF"
-              ios_backgroundColor="#767577"
-            />
-          </View>
-          <Typography variant="caption2" color={colors.textTertiary}>
-            Departure countdowns and a reminder the morning your trip begins.
-          </Typography>
-        </GlassContainer>
-
-        {/* Information Section */}
-        <GlassContainer style={styles.section}>
-          <Typography variant="caption1" weight="semiBold" color={colors.textSecondary} style={styles.sectionTitle}>
-            INFORMATION
-          </Typography>
-
-          <Pressable style={styles.settingsRow} onPress={vm.handlePrivacyPolicy}>
-            <Typography variant="body" color={colors.textPrimary}>Privacy Policy</Typography>
-            <Typography variant="body" color={colors.electricBlue}>→</Typography>
+          <Pressable
+            style={({ pressed }) => [
+              styles.premiumButton,
+              { backgroundColor: PREMIUM_CARD.buttonBg },
+              pressed && styles.rowPressed,
+            ]}
+            onPress={vm.handleManageSubscription}
+          >
+            <Typography variant="footnote" weight="medium" color={PREMIUM_CARD.title}>
+              Manage
+            </Typography>
           </Pressable>
+        </LinearGradient>
 
-          <View style={rowDividerStyle} />
+        {/* Preferences */}
+        <Typography variant="caption1" weight="semiBold" color={colors.textTertiary} style={styles.sectionLabel}>
+          PREFERENCES
+        </Typography>
+        <View style={[styles.card, cardSurface(colors)]}>
+          <ToggleRow
+            icon={isDark ? 'moon' : 'sunny'}
+            label={isDark ? 'Dark Mode' : 'Light Mode'}
+            value={isDark}
+            onValueChange={toggleTheme}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
+          <ToggleRow
+            icon="notifications"
+            label="Trip Reminders"
+            sublabel="Countdown & departure alerts"
+            value={notifications.enabled}
+            onValueChange={notifications.toggle}
+            disabled={!notifications.isHydrated}
+          />
+        </View>
 
-          <Pressable style={styles.settingsRow} onPress={vm.handleTermsOfService}>
-            <Typography variant="body" color={colors.textPrimary}>Terms of Service</Typography>
-            <Typography variant="body" color={colors.electricBlue}>→</Typography>
-          </Pressable>
-        </GlassContainer>
+        {/* Information */}
+        <Typography variant="caption1" weight="semiBold" color={colors.textTertiary} style={styles.sectionLabel}>
+          INFORMATION
+        </Typography>
+        <View style={[styles.card, cardSurface(colors)]}>
+          <LinkRow icon="shield-checkmark" label="Privacy Policy" onPress={vm.handlePrivacyPolicy} />
+          <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
+          <LinkRow icon="document-text" label="Terms of Service" onPress={vm.handleTermsOfService} />
+          <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
+          <LinkRow icon="help-circle" label="Help & Support" onPress={vm.handleHelpSupport} />
+        </View>
 
-        {/* Account Actions */}
+        {/* TEMP: paywall test button — remove before release */}
+        <View style={styles.actionsSection}>
+          <Button
+            title="Open Paywall (TEMP)"
+            variant="secondary"
+            onPress={() => router.push('/paywall')}
+            icon={<Ionicons name="card-outline" size={18} color={colors.textPrimary} />}
+          />
+        </View>
+
+        {/* Account actions */}
         <View style={styles.actionsSection}>
           <Button
             title="Log Out"
-            variant="ghost"
+            variant="secondary"
             onPress={vm.handleLogout}
             loading={vm.isLoggingOut}
-            style={logoutButtonStyle}
+            icon={<Ionicons name="log-out-outline" size={18} color={colors.textPrimary} />}
           />
-
           <Button
             title="Delete Account"
             variant="destructive"
             onPress={vm.handleDeletePress}
-            style={deleteButtonStyle}
           />
         </View>
 
@@ -352,6 +417,7 @@ export function ProfileScreen() {
                 >
                   Please wait while we delete your data.
                 </Typography>
+                <ActivityIndicator color={colors.electricBlue} style={styles.modalSpinner} />
               </>
             )}
           </GlassContainer>
@@ -359,6 +425,14 @@ export function ProfileScreen() {
       </Modal>
     </View>
   );
+}
+
+/** Shared flat-card surface — adapts to light/dark via theme tokens. */
+function cardSurface(colors: ColorScheme) {
+  return {
+    backgroundColor: colors.backgroundSecondary,
+    borderColor: colors.glassBorder,
+  };
 }
 
 const styles = StyleSheet.create({
@@ -371,96 +445,156 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.screen,
   },
-  profileHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  avatarContainer: {
+  pageTitle: {
     marginBottom: spacing.md,
   },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 2,
+
+  // Identity card
+  identityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radii.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.md,
   },
-  avatarFallback: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
   },
   avatarBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: -3,
+    right: -3,
+    width: 22,
+    height: 22,
+    borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    ...shadows.sm,
   },
-  userName: {
+  identityText: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     marginBottom: spacing.xxs,
   },
   proBadge: {
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-    borderRadius: radii.full,
-    borderWidth: 1,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radii.xs,
   },
-  section: {
+
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
     marginBottom: spacing.md,
   },
-  sectionTitle: {
-    marginBottom: spacing.sm,
+  statTile: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  subscriptionRow: {
+  statLabel: {
+    marginTop: spacing.xxs,
+  },
+
+  // Premium card
+  premiumCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: spacing.md,
+    borderRadius: radii.card,
+    marginBottom: spacing.lg,
+    ...shadows.card,
   },
-  subscriptionInfo: {
+  premiumInfo: {
     flex: 1,
     marginRight: spacing.md,
   },
-  settingsRow: {
+  premiumTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  premiumSub: {
+    marginTop: spacing.xxs,
+  },
+  premiumButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.sm,
+  },
+
+  // Sections / cards
+  sectionLabel: {
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xxs,
+    letterSpacing: 0.6,
+  },
+  card: {
+    borderRadius: radii.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
   },
-  settingsRowLeft: {
+  rowPressed: {
+    opacity: 0.6,
+  },
+  rowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  settingsIcon: {
-    marginRight: spacing.sm,
-  },
-  rowDivider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  actionsSection: {
-    marginTop: spacing.lg,
     gap: spacing.sm,
+    flex: 1,
   },
-  logoutButton: {
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    borderRadius: radii.md,
+  rowTextWrap: {
+    flex: 1,
   },
-  deleteButton: {
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    borderWidth: 1,
+  rowSub: {
+    marginTop: 1,
+  },
+  iconChip: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: spacing.md + 32 + spacing.sm,
+  },
+
+  // Actions
+  actionsSection: {
+    gap: spacing.sm,
   },
   version: {
     marginTop: spacing.xl,
   },
+
+  // Delete modal
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -485,6 +619,9 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
+  },
+  modalSpinner: {
+    marginTop: spacing.sm,
   },
   deleteInput: {
     borderRadius: radii.md,

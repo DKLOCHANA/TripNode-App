@@ -22,6 +22,28 @@ export function useMyTripsViewModel() {
     [trips, pendingDeleteId]
   );
 
+  // Read-only split into upcoming (ongoing or future) and past, used to render
+  // the two sections. Upcoming is sorted nearest-first; past most-recent-first.
+  const { upcomingTrips, pastTrips } = useMemo(() => {
+    const now = Date.now();
+    const upcoming: Itinerary[] = [];
+    const past: Itinerary[] = [];
+
+    for (const trip of trips) {
+      const end = new Date(trip.endDateUtc).getTime();
+      (Number.isFinite(end) && end < now ? past : upcoming).push(trip);
+    }
+
+    upcoming.sort(
+      (a, b) => new Date(a.startDateUtc).getTime() - new Date(b.startDateUtc).getTime()
+    );
+    past.sort(
+      (a, b) => new Date(b.startDateUtc).getTime() - new Date(a.startDateUtc).getTime()
+    );
+
+    return { upcomingTrips: upcoming, pastTrips: past };
+  }, [trips]);
+
   const handlePlanTrip = useCallback(() => {
     if (!subscription.checkAndGate()) return;
     router.push('/(app)/plan');
@@ -57,6 +79,8 @@ export function useMyTripsViewModel() {
 
   return {
     trips,
+    upcomingTrips,
+    pastTrips,
     isLoadingTrips: isLoading || (isFetching && !data),
     isDeletingTrip: deleteTripMutation.isPending,
     pendingDeleteTrip,

@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, ReactNode } from 'react';
 import { Stack, useSegments, router } from 'expo-router';
+import {
+  ThemeProvider as NavigationThemeProvider,
+  DefaultTheme as NavDefaultTheme,
+  DarkTheme as NavDarkTheme,
+  type Theme as NavTheme,
+} from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -88,16 +94,42 @@ function useAuthRedirect() {
   return { isHydrated, gateStatus, hasUser: !!user };
 }
 
+/**
+ * React Navigation paints scene backgrounds, headers and the area behind the
+ * (translucent) bottom tab bar using its own theme — NOT our app `colors`. With
+ * no theme wired, expo-router falls back to the light default (white), so in
+ * dark mode the translucent tab bar composited over white and the bottom strip
+ * stayed white after toggling theme. Deriving the nav theme from our colors
+ * keeps those navigator surfaces in sync with dark/light.
+ */
+function useNavigationTheme(): NavTheme {
+  const { colors, isDark } = useTheme();
+  const base = isDark ? NavDarkTheme : NavDefaultTheme;
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      background: colors.backgroundPrimary,
+      card: colors.backgroundPrimary,
+      text: colors.textPrimary,
+      border: colors.tabBarBorder,
+      primary: colors.electricBlue,
+      notification: colors.electricBlue,
+    },
+  };
+}
+
 function RootLayoutContent() {
   const { isHydrated, gateStatus, hasUser } = useAuthRedirect();
   const { colors, isDark } = useTheme();
+  const navTheme = useNavigationTheme();
 
   // Show splash while auth hydrates, or while we resolve the subscription gate
   // for a signed-in user. This prevents a flash of the wrong screen.
   const showSplash = !isHydrated || (hasUser && gateStatus === 'unknown');
 
   return (
-    <>
+    <NavigationThemeProvider value={navTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {showSplash ? (
         <View style={[styles.loading, { backgroundColor: colors.backgroundPrimary }]}>
@@ -123,7 +155,7 @@ function RootLayoutContent() {
           />
         </Stack>
       )}
-    </>
+    </NavigationThemeProvider>
   );
 }
 

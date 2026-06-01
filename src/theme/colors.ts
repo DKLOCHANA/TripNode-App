@@ -30,8 +30,10 @@ export const darkColors = {
   error: '#FF453A',
   errorDim: 'rgba(255,69,58,0.15)',
 
-  // Tab bar
-  tabBarBackground: 'rgba(0,0,0,0.85)',
+  // Tab bar — opaque so a frozen screen snapshot behind the bar can't bleed
+  // through on iOS (translucency caused a stale opposite-theme tint after
+  // navigating into a nested stack and back).
+  tabBarBackground: '#000000',
   tabBarBorder: 'rgba(255,255,255,0.08)',
   tabBarActive: '#0A84FF',
   tabBarInactive: 'rgba(255,255,255,0.35)',
@@ -81,8 +83,10 @@ export const lightColors = {
   error: '#FF453A',
   errorDim: 'rgba(255,69,58,0.15)',
 
-  // Tab bar
-  tabBarBackground: 'rgba(255,255,255,0.85)',
+  // Tab bar — opaque so a frozen screen snapshot behind the bar can't bleed
+  // through on iOS (translucency caused a stale opposite-theme tint after
+  // navigating into a nested stack and back).
+  tabBarBackground: '#FFFFFF',
   tabBarBorder: 'rgba(0,0,0,0.08)',
   tabBarActive: '#0A84FF',
   tabBarInactive: 'rgba(0,0,0,0.35)',
@@ -108,4 +112,10 @@ export const gradients = {
   onboarding: ['#0a1628', '#0f1f3d', '#000'] as const,
   authLogin: ['#1a1a2e', '#16213e', '#0f3460', '#000'] as const,
   authRegister: ['#2d1b69', '#1a1a2e', '#0f3460', '#e94560'] as const,
+  // Bright brand blue — avatars / accent fills.
+  brand: ['#0A84FF', '#5BA3F9'] as const,
+  // Deep navy — premium surfaces; reads well on both light and dark backgrounds.
+  premium: ['#1A2A4A', '#2A4A7A'] as const,
+  // Full-screen paywall backdrop.
+  paywall: ['#0A1628', '#0F2040', '#132A52', '#1A3565'] as const,
 } as const;

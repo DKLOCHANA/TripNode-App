@@ -6,6 +6,7 @@ export { useSaveTrip } from './useSaveTrip';
 export { useDeleteTrip } from './useDeleteTrip';
 export { usePlacePhoto } from './usePlacePhoto';
 export { useActivityPhoto } from './useActivityPhoto';
+export { useActivityRating } from './useActivityRating';
 export { useTripCardPhoto } from './useTripCardPhoto';
 export { useAuth } from './useAuth';
 export { useSubscriptionStatus } from './useSubscriptionStatus';

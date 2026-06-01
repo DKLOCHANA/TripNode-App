@@ -2,15 +2,16 @@
  * Local notification service (iOS, on-device only — no push tokens / servers).
  *
  * Schedules trip-tied reminders for saved itineraries, an optional weekly
- * re-engagement nudge, and a subscription-renewal heads-up 24h before
- * auto-renewal. The full set is recomputed (cancel-all → reschedule) whenever
- * trips or subscription state change, or on app foreground.
+ * re-engagement nudge, and a subscription heads-up 24h before the entitlement's
+ * expiration date. The full set is recomputed (cancel-all → reschedule)
+ * whenever trips or subscription state change, or on app foreground.
  *
  * Implemented notification types (per product decision):
  *   • Pre-trip countdown — 7 days & 1 day before start (6 PM device-local)
  *   • Trip-start         — morning of the start date (8 AM device-local)
  *   • Weekly re-engage   — repeating Sun 6 PM, only when no upcoming trip exists
- *   • Renewal reminder   — 24h before the active entitlement's expiration date
+ *   • Subscription       — 24h before expiration: "renews" if auto-renew is on,
+ *                          otherwise an "expires / you'll lose access" warning
  */
 
 import * as Notifications from 'expo-notifications';
@@ -131,7 +132,7 @@ function planForTrip(trip: Itinerary, now: Date): PlannedNotification[] {
 export interface RenewalReminderInput {
   /** Expiration / next-renewal date from RevenueCat (`entitlement.expirationDate`). */
   expirationDate: Date;
-  /** Will the entitlement auto-renew at expiration? Skip the reminder if not. */
+  /** Will the entitlement auto-renew? Drives renewal vs. lapse-warning copy. */
   willRenew: boolean;
   /** Used to phrase the reminder (e.g. "monthly" vs "yearly"). */
   productIdentifier: string | null;
@@ -153,12 +154,22 @@ function buildRenewalReminder(
   renewal: RenewalReminderInput,
   now: Date
 ): PlannedNotification | null {
-  if (!renewal.willRenew) return null;
-
   const reminderTime = renewal.expirationDate.getTime() - RENEWAL_REMINDER_MS_BEFORE;
   if (reminderTime <= now.getTime()) return null;
 
   const plan = describePlan(renewal.productIdentifier);
+
+  // Auto-renew is off — the subscription will lapse and (hard paywall) the user
+  // will be locked out. This is the more important heads-up: warn them 24h
+  // ahead so they can resubscribe before losing access.
+  if (!renewal.willRenew) {
+    return {
+      date: new Date(reminderTime),
+      title: 'Your TripNode Premium expires tomorrow',
+      body: "Your subscription ends in 24 hours and you'll lose access to unlimited AI itineraries. Tap to renew and keep planning.",
+    };
+  }
+
   return {
     date: new Date(reminderTime),
     title:

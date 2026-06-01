@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
+import { useTrips } from '@/hooks/useTrips';
 import { queryClient } from '@/lib/queryClient';
 import { AsyncStorageService } from '@/data/sources/local/asyncStorage';
 import { checkNetworkAndAlert } from '@/lib/network';
@@ -16,6 +17,10 @@ type DeleteStep = 'idle' | 'confirm' | 'typing' | 'deleting';
 
 const PROFILE_PHOTO_KEY = 'user_profile_photo';
 
+// Support contact surfaced from the Profile "Help & Support" row. Change this
+// to your preferred support inbox.
+const SUPPORT_EMAIL = 'dklochanaedirisooriya@gmail.com';
+
 export function useProfileViewModel() {
   const router = useRouter();
   const haptic = useHaptic();
@@ -24,6 +29,32 @@ export function useProfileViewModel() {
   const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const resetOnboarding = useOnboardingStore((s) => s.resetCompletion);
   const subscription = useSubscriptionStatus();
+  const { data: trips } = useTrips(user?.uid);
+
+  // Read-only display stats derived from the user's saved trips. Countries are
+  // approximated from the trailing segment of each destination's formatted
+  // address (e.g. "Kyoto, Japan" → "Japan").
+  const stats = useMemo(() => {
+    const list = trips ?? [];
+    const countries = new Set<string>();
+    let activitiesCount = 0;
+
+    for (const trip of list) {
+      const country =
+        trip.destination?.formattedAddress?.split(',').pop()?.trim() ||
+        trip.destination?.name;
+      if (country) countries.add(country.toLowerCase());
+      for (const day of trip.days ?? []) {
+        activitiesCount += day.activities?.length ?? 0;
+      }
+    }
+
+    return {
+      tripsCount: list.length,
+      countriesCount: countries.size,
+      activitiesCount,
+    };
+  }, [trips]);
 
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('idle');
   const [deleteInput, setDeleteInput] = useState('');
@@ -325,6 +356,13 @@ export function useProfileViewModel() {
     });
   }, []);
 
+  const handleHelpSupport = useCallback(() => {
+    haptic.lightImpact();
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=TripNode%20Support`).catch(() => {
+      Alert.alert('Error', `Unable to open your mail app. Reach us at ${SUPPORT_EMAIL}.`);
+    });
+  }, [haptic]);
+
   const handleManageSubscription = useCallback(() => {
     haptic.lightImpact();
     router.push('/(app)/subscription');
@@ -344,6 +382,11 @@ export function useProfileViewModel() {
     isSubscriptionLoading: subscription.isLoading,
     renewsAutomatically: subscription.renewsAutomatically,
 
+    // Trip stats (read-only)
+    tripsCount: stats.tripsCount,
+    countriesCount: stats.countriesCount,
+    activitiesCount: stats.activitiesCount,
+
     // Loading states
     isLoggingOut,
 
@@ -360,6 +403,7 @@ export function useProfileViewModel() {
     handleLogout,
     handlePrivacyPolicy,
     handleTermsOfService,
+    handleHelpSupport,
     handleManageSubscription,
     handleAvatarPress,
   };

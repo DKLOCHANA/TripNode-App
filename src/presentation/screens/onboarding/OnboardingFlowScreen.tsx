@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { ONBOARDING_FLOW, ONBOARDING_TOTAL } from '@/config/onboarding';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { analyticsService } from '@/services/analyticsService';
+import { appsFlyerService } from '@/services/appsFlyerService';
 import { STEP_REGISTRY } from './steps';
 
 /**
@@ -32,6 +33,14 @@ export function OnboardingFlowScreen() {
     finishing.current = true;
     try {
       await complete(); // persist flag + name (name kept for Register prefill)
+
+      // Ask for App Tracking Transparency at the end of onboarding. AppsFlyer
+      // was initialized with `timeToWaitForATTUserAuthorization`, so resolving
+      // the prompt now lets the SDK attribute the install with IDFA (when the
+      // user allows it) before that wait times out. Best-effort: the service
+      // swallows its own errors and is a no-op off-iOS / in Expo Go, so it must
+      // never block finishing onboarding.
+      await appsFlyerService.requestTrackingPermission();
     } finally {
       reset(); // clear in-memory answers; persisted name survives
       router.replace('/(auth)/register');

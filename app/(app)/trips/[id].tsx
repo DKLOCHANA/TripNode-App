@@ -1,28 +1,11 @@
-import { useNavigation } from 'expo-router';
-import { useLayoutEffect } from 'react';
 import { ItineraryDetailScreen } from '@/presentation/screens/trips/ItineraryDetailScreen';
-import { useTheme } from '@/theme/ThemeContext';
 
+// The bottom tab bar stays visible across the whole app. We intentionally do
+// NOT hide it here: hiding it via `getParent().setOptions({ tabBarStyle })` and
+// restoring it on unmount stamped a hardcoded (and, after a theme switch on a
+// frozen screen, stale) tabBarStyle onto the Tabs navigator, which stuck until
+// app restart and showed the wrong background colour. Styling now lives solely
+// in the themed tab bar in app/(app)/_layout.tsx.
 export default function ItineraryDetailRoute() {
-  const navigation = useNavigation();
-  const { colors } = useTheme();
-
-  useLayoutEffect(() => {
-    const parent = navigation.getParent();
-    parent?.setOptions({
-      tabBarStyle: { display: 'none' },
-    });
-
-    return () => {
-      parent?.setOptions({
-        tabBarStyle: {
-          backgroundColor: colors.tabBarBackground,
-          borderTopColor: colors.tabBarBorder,
-          borderTopWidth: 0.5,
-        },
-      });
-    };
-  }, [navigation, colors]);
-
   return <ItineraryDetailScreen />;
 }

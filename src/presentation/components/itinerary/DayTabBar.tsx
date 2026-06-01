@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, View } from 'react-native';
 import { Typography } from '@/presentation/components/ui/Typography';
 import { useTheme } from '@/theme/ThemeContext';
-import { shadows } from '@/theme/shadows';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
+
+interface DayTab {
+  dayNumber: number;
+  date: string; // YYYY-MM-DD
+}
 
 interface DayTabBarProps {
   days: DayTab[];
@@ -12,79 +16,76 @@ interface DayTabBarProps {
   onSelectDay: (dayNumber: number) => void;
 }
 
-interface DayTab {
-  dayNumber: number;
-  date: string; // YYYY-MM-DD
-}
+const ACTIVE_WEEKDAY = 'rgba(255,255,255,0.7)';
+const ACTIVE_DOT = 'rgba(255,255,255,0.85)';
 
 export function DayTabBar({ days, selectedDay, onSelectDay }: DayTabBarProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.wrapper}>
-      <View style={[
-        styles.container,
-        { backgroundColor: colors.backgroundSecondary, borderColor: colors.glassBorder },
-      ]}>
-        {days.map((day) => {
-          const isSelected = day.dayNumber === selectedDay;
-          const dateObj = new Date(day.date + 'T00:00:00');
-          const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0);
-          const dayOfMonth = dateObj.getDate();
+    <View style={styles.content}>
+      {days.map((day) => {
+        const isSelected = day.dayNumber === selectedDay;
+        const dateObj = new Date(day.date + 'T00:00:00');
+        const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayOfMonth = dateObj.getDate();
 
-          return (
-            <Pressable
-              key={day.dayNumber}
-              style={[
-                styles.tab,
-                isSelected && { backgroundColor: colors.electricBlueDim },
-              ]}
-              onPress={() => onSelectDay(day.dayNumber)}
+        return (
+          <Pressable
+            key={day.dayNumber}
+            onPress={() => onSelectDay(day.dayNumber)}
+            style={[
+              styles.tab,
+              { backgroundColor: isSelected ? colors.electricBlue : colors.backgroundSecondary },
+            ]}
+          >
+            <Typography
+              variant="caption2"
+              weight="medium"
+              color={isSelected ? ACTIVE_WEEKDAY : colors.textTertiary}
+              style={styles.weekday}
             >
-              <Typography
-                variant="caption2"
-                color={isSelected ? colors.electricBlue : colors.textTertiary}
-                weight="medium"
-              >
-                {dayOfWeek}
-              </Typography>
-              <Typography
-                variant="headline"
-                color={isSelected ? colors.electricBlue : colors.textPrimary}
-                weight={isSelected ? 'bold' : 'regular'}
-              >
-                {dayOfMonth}
-              </Typography>
-            </Pressable>
-          );
-        })}
-      </View>
+              {weekday.toUpperCase()}
+            </Typography>
+            <Typography
+              variant="headline"
+              weight="semiBold"
+              color={isSelected ? colors.white : colors.textPrimary}
+            >
+              {dayOfMonth}
+            </Typography>
+            <View style={[styles.dot, { backgroundColor: isSelected ? ACTIVE_DOT : 'transparent' }]} />
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  content: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  container: {
-    flexDirection: 'row',
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs,
+    flexWrap: 'wrap',
+    paddingHorizontal: spacing.screen,
+    paddingBottom: spacing.sm,
     gap: spacing.xs,
-    ...shadows.sm,
   },
   tab: {
-    paddingHorizontal: spacing.md,
+    minWidth: 52,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.lg,
-    backgroundColor: 'transparent',
+    borderRadius: radii.md,
+    gap: 1,
+  },
+  weekday: {
+    letterSpacing: 0.5,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: radii.full,
+    marginTop: 2,
   },
 });

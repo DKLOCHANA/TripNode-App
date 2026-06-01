@@ -1,8 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
+import { useActivityPhoto } from '@/hooks';
+import { formatDurationShort } from '@/lib/date';
+import { getCategoryIcon, getCategoryLabel } from '@/lib/categoryIcons';
 import { useTheme } from '@/theme/ThemeContext';
-import { shadows } from '@/theme/shadows';
+import { getInterestColors } from '@/theme/interestColors';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
 import type { Attraction } from '@/domain/entities/Attraction';
@@ -10,136 +15,153 @@ import type { Attraction } from '@/domain/entities/Attraction';
 interface AttractionCardProps {
   attraction: Attraction;
   selected: boolean;
+  destinationCity?: string;
   onToggle: () => void;
 }
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  culture: '🏛️',
-  foodie: '🍜',
-  adventure: '⛰️',
-  relax: '🏖️',
-  shopping: '🏪',
-  nightlife: '🌃',
-  history: '🏰',
-  wellness: '🧘',
-  beach: '🏝️',
-  photography: '📸',
-  nature: '🌲',
-  landmark: '📍',
-};
+const RATING_COLOR = '#E8A23D'; // amber star, readable on both themes
 
-export function AttractionCard({ attraction, selected, onToggle }: AttractionCardProps) {
+function MetaDot() {
   const { colors } = useTheme();
-  const emoji = CATEGORY_EMOJIS[attraction.category] || '📍';
+  return (
+    <Typography variant="caption2" color={colors.glassBorder}>
+      ·
+    </Typography>
+  );
+}
+
+export function AttractionCard({ attraction, selected, destinationCity, onToggle }: AttractionCardProps) {
+  const { colors, isDark } = useTheme();
+  const category = getInterestColors(attraction.category, isDark);
+  const label = getCategoryLabel(attraction.category);
+  const duration = formatDurationShort(attraction.estimatedDurationMinutes);
+  const price = attraction.estimatedCostUsd != null ? `$${attraction.estimatedCostUsd}` : null;
+  const { data: photoUri } = useActivityPhoto(attraction.name, destinationCity);
 
   return (
     <Pressable
-      style={[
-        styles.container,
-        { backgroundColor: colors.glassInputBg, borderColor: colors.glassBorder },
-        selected && { borderColor: colors.electricBlue, backgroundColor: 'rgba(0, 122, 255, 0.1)' },
-      ]}
       onPress={onToggle}
-      hitSlop={4}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.backgroundSecondary,
+          borderColor: selected ? colors.electricBlue : colors.glassBorder,
+        },
+        !selected && styles.cardOff,
+      ]}
     >
-      {/* Checkbox */}
-      <View style={[
-        styles.checkbox,
-        { borderColor: colors.glassBorder },
-        selected && { backgroundColor: colors.electricBlue, borderColor: colors.electricBlue },
-      ]}>
-        {selected && <Typography variant="caption1" color={colors.white}>✓</Typography>}
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Typography variant="body" weight="semiBold" numberOfLines={1} style={styles.name}>
-            {emoji} {attraction.name}
-          </Typography>
-          {attraction.rating && (
-            <View style={styles.rating}>
-              <Typography variant="caption1" color={colors.textSecondary}>
-                ⭐ {attraction.rating.toFixed(1)}
-              </Typography>
-            </View>
+      <View style={styles.inner}>
+        {/* Photo (falls back to the category icon while loading / if missing) */}
+        <View style={[styles.iconChip, { backgroundColor: category.bg }]}>
+          {photoUri ? (
+            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="disk" />
+          ) : (
+            <Ionicons name={getCategoryIcon(attraction.category)} size={22} color={category.text} />
           )}
         </View>
 
-        <Typography
-          variant="footnote"
-          color={colors.textSecondary}
-          numberOfLines={2}
-          style={styles.description}
-        >
-          {attraction.description}
-        </Typography>
+        {/* Body */}
+        <View style={styles.body}>
+          <Typography variant="callout" weight="semiBold" color={colors.textPrimary} numberOfLines={1}>
+            {attraction.name}
+          </Typography>
+          <Typography variant="caption1" color={colors.textSecondary} numberOfLines={2} style={styles.desc}>
+            {attraction.description}
+          </Typography>
 
-        <View style={styles.meta}>
-          <View style={styles.metaItem}>
+          <View style={styles.meta}>
+            {attraction.rating != null ? (
+              <>
+                <Ionicons name="star" size={12} color={RATING_COLOR} />
+                <Typography variant="caption2" weight="semiBold" color={RATING_COLOR}>
+                  {attraction.rating.toFixed(1)}
+                </Typography>
+                <MetaDot />
+              </>
+            ) : null}
             <Typography variant="caption2" color={colors.textTertiary}>
-              ⏱ {formatDuration(attraction.estimatedDurationMinutes)}
+              {duration}
             </Typography>
-          </View>
-          {attraction.estimatedCostUsd !== null && (
-            <View style={styles.metaItem}>
-              <Typography variant="caption2" color={colors.textTertiary}>
-                💵 ${attraction.estimatedCostUsd}
+            {price ? (
+              <>
+                <MetaDot />
+                <Typography variant="caption2" color={colors.textTertiary}>
+                  {price}
+                </Typography>
+              </>
+            ) : null}
+            <MetaDot />
+            <View style={[styles.categoryTag, { backgroundColor: category.bg }]}>
+              <Typography variant="caption2" weight="medium" color={category.text}>
+                {label}
               </Typography>
             </View>
-          )}
+          </View>
+        </View>
+
+        {/* Checkbox */}
+        <View
+          style={[
+            styles.checkbox,
+            { backgroundColor: selected ? colors.electricBlue : colors.backgroundTertiary },
+          ]}
+        >
+          {selected ? <Ionicons name="checkmark" size={14} color={colors.white} /> : null}
         </View>
       </View>
     </Pressable>
   );
 }
 
-function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes}min`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    borderRadius: radii.md,
-    borderWidth: 1,
-    padding: spacing.sm,
+  card: {
+    borderRadius: radii.card,
+    borderWidth: 1.5,
     marginBottom: spacing.sm,
-    ...shadows.sm,
+    overflow: 'hidden',
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: radii.full,
-    borderWidth: 2,
-    marginRight: spacing.sm,
+  cardOff: {
+    opacity: 0.7,
+  },
+  inner: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+  },
+  iconChip: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  content: {
+  body: {
     flex: 1,
+    minWidth: 0,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xxs,
-  },
-  name: {
-    flex: 1,
-  },
-  rating: {
-    marginLeft: spacing.xs,
-  },
-  description: {
+  desc: {
+    marginTop: spacing.xxs,
     marginBottom: spacing.xs,
   },
   meta: {
     flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.xxs,
   },
-  metaItem: {
-    marginRight: spacing.md,
+  categoryTag: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 1,
+    borderRadius: radii.xs,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 2,
   },
 });

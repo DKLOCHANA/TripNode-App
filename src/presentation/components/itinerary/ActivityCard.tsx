@@ -1,10 +1,14 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, Pressable, Linking, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
-import { useActivityPhoto } from '@/hooks';
+import { useActivityPhoto, useActivityRating } from '@/hooks';
+import { formatClockTime, formatDurationShort } from '@/lib/date';
 import { useTheme } from '@/theme/ThemeContext';
+import { gradients } from '@/theme/colors';
+import { getInterestColors } from '@/theme/interestColors';
 import { shadows } from '@/theme/shadows';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
@@ -16,177 +20,180 @@ interface ActivityCardProps {
   ianaTimezone?: string;
 }
 
-export const ActivityCard = memo(function ActivityCard({ activity, destinationCity, ianaTimezone }: ActivityCardProps) {
-  const { colors } = useTheme();
-  const startTime = formatTime(activity.startTimeUtc);
-  const duration = formatDuration(activity.durationMinutes);
+const OVERLAY_GRADIENT = ['transparent', 'rgba(0,0,0,0.6)'] as const;
+const BADGE_BG = 'rgba(0,0,0,0.45)';
+const TITLE_SHADOW = {
+  textShadowColor: 'rgba(0,0,0,0.4)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 5,
+} as const;
+const RATING_COLOR = '#E8A23D'; // amber — gold-ish star, readable on both themes
+
+export const ActivityCard = memo(function ActivityCard({
+  activity,
+  destinationCity,
+  ianaTimezone,
+}: ActivityCardProps) {
+  const { colors, isDark } = useTheme();
+  const tz = ianaTimezone ?? 'UTC';
   const { data: photoUri } = useActivityPhoto(activity.name, destinationCity);
+  const { data: rating } = useActivityRating(activity.name, destinationCity);
+
+  const timeRange = `${formatClockTime(activity.startTimeUtc, tz)} → ${formatClockTime(activity.endTimeUtc, tz)}`;
+  const duration = formatDurationShort(activity.durationMinutes);
+  const category = getInterestColors(activity.category?.toLowerCase() ?? '', isDark);
+  const price = activity.estimatedCostUsd != null ? `$${Math.round(activity.estimatedCostUsd)}` : null;
 
   const handleOpenMaps = () => {
     const { latitude, longitude } = activity.coordinates;
     const label = encodeURIComponent(activity.name);
-
     const url = Platform.select({
       ios: `maps:0,0?q=${label}@${latitude},${longitude}`,
       default: `https://maps.google.com/?q=${latitude},${longitude}`,
     });
-
-    Linking.openURL(url);
+    Linking.openURL(url!);
   };
 
   return (
-    <View style={styles.container}>
-      {/* Time indicator */}
-      <View style={styles.timeColumn}>
-        <Typography variant="caption1" color={colors.electricBlue} weight="semiBold">
-          {startTime}
-        </Typography>
-        <View style={styles.timeline}>
-          <View style={[styles.timelineDot, { backgroundColor: colors.electricBlue }]} />
-          <View style={[styles.timelineLine, { backgroundColor: colors.glassBorder }]} />
+    <View style={[styles.cardShadow, styles.card, { backgroundColor: colors.backgroundSecondary, borderColor: colors.glassBorder }]}>
+      {/* Image */}
+      <View style={styles.imageWrap}>
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="disk" />
+        ) : (
+          <LinearGradient colors={gradients.brand} style={StyleSheet.absoluteFill} />
+        )}
+        <LinearGradient colors={OVERLAY_GRADIENT} style={styles.overlay} />
+
+        <View style={[styles.badge, styles.badgeLeft]}>
+          <Ionicons name="time-outline" size={12} color={colors.white} />
+          <Typography variant="caption2" weight="medium" color={colors.white}>
+            {timeRange}
+          </Typography>
+        </View>
+        <View style={[styles.badge, styles.badgeRight]}>
+          <Typography variant="caption2" weight="semiBold" color={colors.white}>
+            {duration}
+          </Typography>
+        </View>
+
+        <View style={styles.caption}>
+          <Typography variant="callout" weight="semiBold" color={colors.white} numberOfLines={1} style={TITLE_SHADOW}>
+            {activity.name}
+          </Typography>
+          <Typography variant="caption1" color="rgba(255,255,255,0.8)" numberOfLines={1} style={TITLE_SHADOW}>
+            {activity.address}
+          </Typography>
         </View>
       </View>
 
-      {/* Activity Card with Photo — shadow wrapper outside overflow:hidden */}
-      <View style={styles.cardShadow}>
-        <View style={[styles.card, { backgroundColor: colors.backgroundTertiary }]}>
-        {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.cardImage} contentFit="cover" cachePolicy="disk" />
-        ) : (
-          <View style={[styles.cardImage, { backgroundColor: colors.backgroundTertiary }]} />
-        )}
-
-        <View style={styles.cardOverlay} />
-
-        {/* Duration badge - top left */}
-        <View style={[styles.durationBadge, { borderColor: colors.glassBorder }]}>
-          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-          <View style={styles.durationBadgeContent}>
-            <Typography variant="caption2" color="#FFFFFF" weight="semiBold">
-              {duration}
+      {/* Footer */}
+      <View style={styles.footer}>
+        <View style={styles.footerLeft}>
+          {activity.category ? (
+            <View style={[styles.categoryTag, { backgroundColor: category.bg }]}>
+              <Typography variant="caption2" weight="medium" color={category.text}>
+                {activity.category}
+              </Typography>
+            </View>
+          ) : null}
+          {rating != null ? (
+            <View style={styles.rating}>
+              <Ionicons name="star" size={12} color={RATING_COLOR} />
+              <Typography variant="caption1" weight="semiBold" color={RATING_COLOR}>
+                {rating.toFixed(1)}
+              </Typography>
+            </View>
+          ) : null}
+          {price ? (
+            <Typography variant="caption1" color={colors.textTertiary}>
+              · {price}
             </Typography>
-          </View>
+          ) : null}
         </View>
 
-        {/* Open in Maps button - top right */}
-        <Pressable onPress={handleOpenMaps} style={[styles.mapButton, { backgroundColor: colors.electricBlue }]} hitSlop={8}>
-          <Typography variant="caption1" color="#FFFFFF" weight="semiBold">
-            Open Map
+        <Pressable style={styles.mapLink} onPress={handleOpenMaps} hitSlop={8}>
+          <Ionicons name="location-outline" size={13} color={colors.electricBlue} />
+          <Typography variant="caption1" weight="medium" color={colors.electricBlue}>
+            Map
           </Typography>
         </Pressable>
-
-        {/* Content - bottom (always dark because it's over a photo) */}
-        <View style={styles.cardContent}>
-          <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
-          <View style={styles.cardContentInner}>
-            <Typography variant="body" weight="semiBold" color="#FFFFFF" numberOfLines={1}>
-              {activity.name}
-            </Typography>
-            <Typography variant="caption1" color="rgba(255,255,255,0.7)" numberOfLines={1} style={styles.address}>
-              {activity.address}
-            </Typography>
-          </View>
-        </View>
-        </View>
       </View>
     </View>
   );
 });
 
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
-
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins} min`;
-  if (mins === 0) return `${hours} hr`;
-  return `${hours}h ${mins}m`;
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    marginBottom: spacing.md,
-  },
-  timeColumn: {
-    width: 50,
-    alignItems: 'center',
-  },
-  timeline: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  timelineLine: {
-    width: 2,
-    flex: 1,
-    marginTop: 4,
-  },
   cardShadow: {
-    flex: 1,
-    height: 140,
     borderRadius: radii.card,
-    marginLeft: spacing.xs,
+    marginBottom: spacing.sm,
     ...shadows.card,
   },
   card: {
-    flex: 1,
     borderRadius: radii.card,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  cardImage: {
-    ...StyleSheet.absoluteFillObject,
+  imageWrap: {
+    height: 130,
+    justifyContent: 'flex-end',
   },
-  cardOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  durationBadge: {
+  overlay: {
     position: 'absolute',
-    top: spacing.xs,
-    left: spacing.xs,
-    borderRadius: radii.sm,
-    overflow: 'hidden',
-    borderWidth: 1,
-  },
-  durationBadgeContent: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxs,
-  },
-  mapButton: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    borderRadius: radii.sm,
-    overflow: 'hidden',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-  },
-  cardContent: {
-    position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.12)',
-    overflow: 'hidden',
+    bottom: 0,
+    height: '70%',
   },
-  cardContentInner: {
+  badge: {
+    position: 'absolute',
+    top: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    borderRadius: radii.xs,
+    backgroundColor: BADGE_BG,
+  },
+  badgeLeft: {
+    left: spacing.sm,
+  },
+  badgeRight: {
+    right: spacing.sm,
+  },
+  caption: {
     padding: spacing.sm,
+    gap: 1,
   },
-  address: {
-    marginTop: spacing.xxs,
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexShrink: 1,
+  },
+  categoryTag: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+    borderRadius: radii.xs,
+  },
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  mapLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    paddingVertical: spacing.xxs,
   },
 });

@@ -18,10 +18,24 @@ import { DateSelector } from '@/presentation/components/plan/DateSelector';
 import { PlacesAutocomplete } from '@/presentation/components/plan/PlacesAutocomplete';
 import { AttractionSelectionSheet } from '@/presentation/components/attractions/AttractionSelectionSheet';
 import { usePlanTripViewModel } from '@/presentation/view-models/usePlanTripViewModel';
+import { getDaysDifference } from '@/lib/date';
 import { useTheme } from '@/theme/ThemeContext';
 import { spacing } from '@/theme/spacing';
 import { radii } from '@/theme/radii';
 import type { InterestId } from '@/lib/constants';
+
+/** Parse the raw budget string into a number, or null if empty/invalid. */
+function parseBudget(budget: string): number | null {
+  const n = parseInt(budget.replace(/[^0-9]/g, ''), 10);
+  return n || null;
+}
+
+/** Format the raw budget string into a "$1,000" label, or null if empty. */
+function formatBudgetLabel(budget: string): string | null {
+  const n = parseBudget(budget);
+  if (!n) return null;
+  return `$${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+}
 
 export function PlanTripScreen() {
   const insets = useSafeAreaInsets();
@@ -201,13 +215,17 @@ export function PlanTripScreen() {
       <AttractionSelectionSheet
         visible={vm.showAttractionSheet}
         isLoading={vm.isGenerating}
-        loadingMessage={
-          vm.generationStep === 'fetching_attractions'
-            ? 'Finding attractions...'
-            : vm.generationStep === 'building_itinerary'
-              ? 'Creating your itinerary...'
-              : undefined
-        }
+        loadingPhase={vm.generationStep === 'building_itinerary' ? 'itinerary' : 'attractions'}
+        tripSummary={{
+          destinationName: vm.destination?.name ?? 'your destination',
+          interests: Array.from(vm.interests),
+          days:
+            vm.startDate && vm.endDate
+              ? getDaysDifference(vm.startDate, vm.endDate) + 1
+              : null,
+          budgetLabel: formatBudgetLabel(vm.budget),
+        }}
+        budgetUsd={parseBudget(vm.budget)}
         destinationOverview={vm.destinationOverview}
         attractions={vm.suggestedAttractions}
         selectedIds={vm.selectedAttractionIds}

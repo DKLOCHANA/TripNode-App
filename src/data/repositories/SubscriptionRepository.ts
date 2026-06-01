@@ -2,12 +2,22 @@ import type { ISubscriptionRepository } from '@/domain/repositories/ISubscriptio
 import type { Subscription } from '@/domain/entities/Subscription';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import { REVENUECAT } from '@/lib/constants';
+import {
+  shouldUsePreviewSubscription,
+  getPreviewSubscription,
+} from '@/data/preview/subscriptionPreview';
 
 /**
  * Subscription repository implementation using RevenueCat
  */
 export class SubscriptionRepository implements ISubscriptionRepository {
   async getSubscriptionStatus(_userId: string): Promise<Subscription> {
+    // Dev-only: in Expo Go there is no RevenueCat, so serve sample data so the
+    // subscription UI can be developed. No-op in real builds.
+    if (shouldUsePreviewSubscription()) {
+      return getPreviewSubscription();
+    }
+
     try {
       const customerInfo = await Purchases.getCustomerInfo();
       return this.mapCustomerInfoToSubscription(customerInfo);

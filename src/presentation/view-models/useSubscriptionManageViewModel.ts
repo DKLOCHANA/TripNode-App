@@ -1,12 +1,18 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { useHaptic } from '@/hooks/useHaptic';
+import { PACKAGE_TYPE } from 'react-native-purchases';
 import { revenueCatService } from '@/services/revenueCatService';
 import { REVENUECAT } from '@/lib/constants';
+import {
+  shouldUsePreviewSubscription,
+  PREVIEW_PRICE_LABEL,
+  PREVIEW_PLAN_PERIOD,
+} from '@/data/preview/subscriptionPreview';
 import { queryKeys } from '@/lib/queryKeys';
 import { checkNetworkAndAlert } from '@/lib/network';
 
@@ -19,6 +25,10 @@ export function useSubscriptionManageViewModel() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [managementURL, setManagementURL] = useState<string | null>(null);
+  const [priceLabel, setPriceLabel] = useState<string | null>(null);
+  // Billing period resolved from the matched package's `packageType` — the
+  // authoritative source (the product-id heuristic below is only a fallback).
+  const [resolvedPeriod, setResolvedPeriod] = useState<'annual' | 'monthly' | null>(null);
 
   // Fetch management URL on mount
   useEffect(() => {
@@ -36,17 +46,75 @@ export function useSubscriptionManageViewModel() {
     }
   }, [subscription.isPro]);
 
-  // Get plan name based on product identifier
-  const getPlanName = useCallback(() => {
-    if (!subscription.productIdentifier) return 'Premium Plan';
-    
-    if (subscription.productIdentifier.includes('annual') || subscription.productIdentifier.includes('yearly')) {
-      return 'Annual Plan';
-    } else if (subscription.productIdentifier.includes('monthly')) {
-      return 'Monthly Plan';
-    }
-    return 'Premium Plan';
+  // Plan type derived from the active product identifier — drives both the
+  // short plan label and the price-period suffix.
+  const planType = useMemo<'annual' | 'monthly' | 'other'>(() => {
+    const id = subscription.productIdentifier?.toLowerCase() ?? '';
+    if (id.includes('annual') || id.includes('year')) return 'annual';
+    if (id.includes('month')) return 'monthly';
+    return 'other';
   }, [subscription.productIdentifier]);
+
+  // Fetch the store price + billing period for the user's active product from
+  // RevenueCat's offerings (the active-subscription info carries neither).
+  // Read-only.
+  useEffect(() => {
+    if (!subscription.isPro || !subscription.productIdentifier) {
+      setPriceLabel(null);
+      setResolvedPeriod(null);
+      return;
+    }
+
+    // Dev-only: Expo Go has no offerings, so use sample price/period.
+    if (shouldUsePreviewSubscription()) {
+      setResolvedPeriod(PREVIEW_PLAN_PERIOD);
+      setPriceLabel(PREVIEW_PRICE_LABEL);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const packages = await revenueCatService.getPackages();
+        const match = packages.find(
+          (p) => p.product.identifier === subscription.productIdentifier
+        );
+        if (cancelled || !match) return;
+
+        const period: 'annual' | 'monthly' | null =
+          match.packageType === PACKAGE_TYPE.ANNUAL
+            ? 'annual'
+            : match.packageType === PACKAGE_TYPE.MONTHLY
+            ? 'monthly'
+            : planType === 'other'
+            ? null
+            : planType;
+        setResolvedPeriod(period);
+
+        const suffix = period === 'annual' ? '/yr' : period === 'monthly' ? '/mo' : '';
+        setPriceLabel(`${match.product.priceString}${suffix}`);
+      } catch {
+        // Silent — the price pill simply won't render.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subscription.isPro, subscription.productIdentifier, planType]);
+
+  // Short labels for the premium card. Prefer the authoritative period from the
+  // matched package, falling back to the product-id heuristic.
+  const effectivePeriod = resolvedPeriod ?? (planType === 'other' ? null : planType);
+  const planLabel = effectivePeriod === 'annual' ? 'Annual' : effectivePeriod === 'monthly' ? 'Monthly' : 'Premium';
+  const expiryDateShort = subscription.formattedExpiryDate?.split(',')[0] ?? null;
+
+  // Full plan name (kept for any caller that wants the long form).
+  const getPlanName = useCallback(() => {
+    if (planType === 'annual') return 'Annual Plan';
+    if (planType === 'monthly') return 'Monthly Plan';
+    return 'Premium Plan';
+  }, [planType]);
 
   // Handle opening subscription management in App Store
   const handleManageSubscription = useCallback(async () => {
@@ -160,7 +228,10 @@ export function useSubscriptionManageViewModel() {
     isExpired: subscription.isExpired,
     isExpiringSoon: subscription.isExpiringSoon,
     planName: getPlanName(),
+    planLabel,
+    priceLabel,
     expiryDate: subscription.formattedExpiryDate,
+    expiryDateShort,
     renewsAutomatically: subscription.renewsAutomatically,
     daysUntilExpiry: subscription.daysUntilExpiry,
     isSubscriptionLoading: subscription.isLoading,

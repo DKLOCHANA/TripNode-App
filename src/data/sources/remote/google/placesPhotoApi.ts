@@ -22,6 +22,42 @@ interface TextSearchResponse {
   }>;
 }
 
+interface TextSearchRatingResponse {
+  places?: Array<{
+    id: string;
+    rating?: number;
+  }>;
+}
+
+/**
+ * Text-search a place and return its Google rating (0–5), or null if there is
+ * no match / no rating. Field-masked to `rating` only to keep the call cheap.
+ */
+export async function searchPlaceRating(query: string): Promise<number | null> {
+  if (!query) return null;
+
+  try {
+    const response = await axios.post<TextSearchRatingResponse>(
+      `${PLACES_BASE}/places:searchText`,
+      {
+        textQuery: query,
+        maxResultCount: 1,
+      },
+      {
+        headers: {
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'places.rating',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data.places?.[0]?.rating ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getPlacePhotoUri(placeId: string): Promise<string | null> {
   if (!placeId) return null;
 

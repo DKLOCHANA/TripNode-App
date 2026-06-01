@@ -5,6 +5,7 @@ import { useTripGenerationStore } from '@/store/tripGenerationStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDayTimeline, type ItineraryDay } from '@/domain/entities/Itinerary';
 import type { TimelineItem } from '@/domain/entities/Activity';
+import { formatDurationShort } from '@/lib/date';
 
 export function useItineraryDetailViewModel() {
   const router = useRouter();
@@ -71,6 +72,18 @@ export function useItineraryDetailViewModel() {
     };
   }, [itinerary]);
 
+  // Read-only summary stats for the selected day's stats bar.
+  const dayStats = useMemo(() => {
+    const acts = selectedDay?.activities ?? [];
+    const totalMinutes = acts.reduce((n, a) => n + (a.durationMinutes ?? 0), 0);
+    const totalCost = acts.reduce((n, a) => n + (a.estimatedCostUsd ?? 0), 0);
+    return {
+      activityCount: acts.length,
+      plannedLabel: totalMinutes > 0 ? formatDurationShort(totalMinutes) : '—',
+      costLabel: `$${Math.round(totalCost).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
+    };
+  }, [selectedDay]);
+
   const handleSelectDay = useCallback((dayNumber: number) => {
     setSelectedDayNumber(dayNumber);
   }, []);
@@ -87,6 +100,7 @@ export function useItineraryDetailViewModel() {
     selectedDay,
     timelineItems,
     headerInfo,
+    dayStats,
     ianaTimezone: itinerary?.destination.ianaTimezone,
 
     // Actions

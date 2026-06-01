@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import type { CustomerInfo } from 'react-native-purchases';
 import { useQueryClient } from '@tanstack/react-query';
 import { revenueCatService } from '@/services/revenueCatService';
@@ -89,21 +90,23 @@ export function useSubscriptionGate(userId: string | null, isHydrated: boolean) 
         setStatus(statusFromCustomerInfo(info));
         linkAppsFlyerIdentity(userId);
       })
-      .catch((error: any) => {
-        // Rate limiting (7638) — fall back to a fresh getCustomerInfo so we
-        // still resolve the gate instead of leaving the user stuck on a
-        // loading screen.
-        if (error?.info?.backendErrorCode === 7638) {
-          revenueCatService.getCustomerInfo().then((info) => {
-            previousUserId.current = userId;
+      .catch(() => {
+        // identify() failed — rate limiting (7638), a transient network blip
+        // at launch, etc. Never lock a paying user out on a flaky launch: fall
+        // back to RevenueCat's locally cached customer info, which resolves the
+        // Pro entitlement even offline. Only gate ('none') when there is
+        // genuinely no active entitlement (or no cached info at all). Restore
+        // Purchases on the paywall remains the recovery path of last resort.
+        revenueCatService
+          .getCustomerInfo()
+          .then((info) => {
+            if (info) {
+              previousUserId.current = userId;
+              linkAppsFlyerIdentity(userId);
+            }
             setStatus(statusFromCustomerInfo(info));
-            linkAppsFlyerIdentity(userId);
-          });
-          return;
-        }
-        // Identify failed for a real reason — default to gated. Restore
-        // Purchases on the paywall is the recovery path.
-        setStatus('none');
+          })
+          .catch(() => setStatus('none'));
       })
       .finally(() => {
         isIdentifying.current = false;
@@ -123,6 +126,20 @@ export function useSubscriptionGate(userId: string | null, isHydrated: boolean) 
     });
     return unsubscribe;
   }, [userId, queryClient]);
+
+  // Re-check the gate when the app returns to the foreground. The customer-info
+  // listener covers in-session changes, but if a subscription lapses while the
+  // app is backgrounded we want to re-evaluate on resume rather than relying
+  // solely on the SDK's own refresh timing.
+  useEffect(() => {
+    if (!userId || !shouldEnableRevenueCat()) return;
+
+    const onChange = (state: AppStateStatus) => {
+      if (state === 'active') refresh();
+    };
+    const sub = AppState.addEventListener('change', onChange);
+    return () => sub.remove();
+  }, [userId, refresh]);
 
   // Log the user out of RevenueCat when our auth user disappears.
   useEffect(() => {

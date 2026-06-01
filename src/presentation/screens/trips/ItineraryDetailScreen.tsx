@@ -1,12 +1,41 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
 import { DayTabBar } from '@/presentation/components/itinerary/DayTabBar';
 import { TimelineSection } from '@/presentation/components/itinerary/TimelineSection';
 import { useItineraryDetailViewModel } from '@/presentation/view-models/useItineraryDetailViewModel';
-import { useTheme } from '@/theme/ThemeContext';
+import { useTheme, type ColorScheme } from '@/theme/ThemeContext';
 import { spacing } from '@/theme/spacing';
+import { radii } from '@/theme/radii';
+
+function StatItem({ value, label }: { value: string; label: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.statItem}>
+      <Typography variant="subheadline" weight="semiBold" color={colors.textPrimary}>
+        {value}
+      </Typography>
+      <Typography variant="caption2" color={colors.textTertiary}>
+        {label}
+      </Typography>
+    </View>
+  );
+}
+
+function StatsBar({ activities, planned, cost }: { activities: number; planned: string; cost: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.statsBar, { backgroundColor: colors.backgroundSecondary, borderColor: colors.glassBorder }]}>
+      <StatItem value={String(activities)} label={activities === 1 ? 'activity' : 'activities'} />
+      <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
+      <StatItem value={planned} label="planned" />
+      <View style={[styles.statDivider, { backgroundColor: colors.glassBorder }]} />
+      <StatItem value={cost} label="estimated" />
+    </View>
+  );
+}
 
 export function ItineraryDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -26,30 +55,30 @@ export function ItineraryDetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm, backgroundColor: colors.backgroundPrimary }]}>
-        <View style={styles.headerRow}>
-          <Pressable onPress={vm.handleGoBack} style={styles.backButton} hitSlop={12}>
-            <Typography variant="title3" color={colors.electricBlue}>
-              ←
-            </Typography>
-          </Pressable>
-          <View style={styles.headerContent}>
-            <Typography variant="title3" weight="bold" numberOfLines={1}>
-              {vm.headerInfo.destination}
-            </Typography>
-            <Typography variant="caption1" color={colors.textSecondary}>
-              {vm.headerInfo.dateRange}
-            </Typography>
-          </View>
-        </View>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Pressable
+          onPress={vm.handleGoBack}
+          hitSlop={10}
+          style={[styles.backButton, backButtonSurface(colors)]}
+        >
+          <Ionicons name="arrow-back" size={18} color={colors.textPrimary} />
+        </Pressable>
+        <Typography variant="headline" weight="semiBold" color={colors.textPrimary} numberOfLines={1} style={styles.headerTitle}>
+          {vm.headerInfo.destination}
+        </Typography>
       </View>
 
-      {/* Day Tabs */}
-      <DayTabBar
-        days={vm.dayTabs}
-        selectedDay={vm.selectedDayNumber}
-        onSelectDay={vm.handleSelectDay}
-      />
+      {/* Day selector */}
+      <DayTabBar days={vm.dayTabs} selectedDay={vm.selectedDayNumber} onSelectDay={vm.handleSelectDay} />
+
+      {/* Selected-day stats */}
+      <View style={styles.statsWrap}>
+        <StatsBar
+          activities={vm.dayStats.activityCount}
+          planned={vm.dayStats.plannedLabel}
+          cost={vm.dayStats.costLabel}
+        />
+      </View>
 
       {/* Timeline */}
       <ScrollView
@@ -67,6 +96,10 @@ export function ItineraryDetailScreen() {
   );
 }
 
+function backButtonSurface(colors: ColorScheme) {
+  return { backgroundColor: colors.backgroundSecondary };
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -76,22 +109,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.screen,
+    paddingBottom: spacing.sm,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
     justifyContent: 'center',
-    marginRight: spacing.xs,
+    alignItems: 'center',
   },
-  headerContent: {
+  headerTitle: {
     flex: 1,
+  },
+  statsWrap: {
+    paddingHorizontal: spacing.screen,
+    marginBottom: spacing.sm,
+  },
+  statsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: 1,
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
   },
   timeline: {
     flex: 1,

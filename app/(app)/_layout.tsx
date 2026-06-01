@@ -1,8 +1,32 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { BottomTabBar, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/theme/ThemeContext';
 import { useTripNotificationSync } from '@/hooks/useTripNotificationSync';
+
+/**
+ * The tab bar background is painted here, from an always-mounted component that
+ * subscribes to the theme directly. Setting the background through per-screen
+ * `tabBarStyle` options instead let react-native-screens cache a stale value
+ * when navigating into a nested stack (e.g. My Trips → itinerary detail and
+ * back), so the bar kept the previous theme's colour. Passing the colour via
+ * the `style` prop overrides the cached `tabBarStyle` (see BottomTabBar:
+ * `style: [tabBarStyle, style]`), so the bar always tracks the live theme.
+ */
+function ThemedTabBar(props: BottomTabBarProps) {
+  const { colors } = useTheme();
+  return (
+    <BottomTabBar
+      {...props}
+      style={{
+        backgroundColor: colors.tabBarBackground,
+        borderTopColor: colors.tabBarBorder,
+        borderTopWidth: 0.5,
+      }}
+    />
+  );
+}
 
 export default function AppLayout() {
   const { colors } = useTheme();
@@ -13,13 +37,9 @@ export default function AppLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <ThemedTabBar {...props} />}
       screenOptions={() => ({
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.tabBarBackground,
-          borderTopColor: colors.tabBarBorder,
-          borderTopWidth: 0.5,
-        },
         tabBarActiveTintColor: colors.tabBarActive,
         tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarLabelStyle: {
@@ -42,7 +62,7 @@ export default function AppLayout() {
         options={{
           title: 'My Trips',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <MaterialCommunityIcons name="map-marker-path" size={size} color={color} />
           ),
         }}
       />

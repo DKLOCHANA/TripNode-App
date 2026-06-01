@@ -3,20 +3,10 @@ import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
   PurchasesOfferings,
-  PRODUCT_CATEGORY,
 } from 'react-native-purchases';
 import RevenueCatUI from 'react-native-purchases-ui';
 import { REVENUECAT } from '@/lib/constants';
 import { shouldEnableRevenueCat } from '@/lib/environment';
-
-export interface SubscriptionDetails {
-  isActive: boolean;
-  tier: 'free' | 'pro';
-  expiresAt: string | null;
-  renewsAutomatically: boolean;
-  productIdentifier: string | null;
-  isExpired: boolean;
-}
 
 // Track if RevenueCat has been successfully configured
 let isRevenueCatConfigured = false;
@@ -127,51 +117,6 @@ export const revenueCatService = {
     } catch (error) {
       console.warn('[RevenueCat] getCustomerInfo error:', error);
       return null;
-    }
-  },
-
-  /**
-   * Get subscription details with expiry check
-   */
-  getSubscriptionDetails: async (): Promise<SubscriptionDetails> => {
-    if (!isRevenueCatConfigured) {
-      return {
-        isActive: false,
-        tier: 'free',
-        expiresAt: null,
-        renewsAutomatically: false,
-        productIdentifier: null,
-        isExpired: false,
-      };
-    }
-
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[REVENUECAT.ENTITLEMENT_PRO];
-      const isActive = !!entitlement;
-
-      // Check if there was a previous subscription that expired
-      const allEntitlements = customerInfo.entitlements.all[REVENUECAT.ENTITLEMENT_PRO];
-      const isExpired = !isActive && !!allEntitlements && !allEntitlements.isActive;
-
-      return {
-        isActive,
-        tier: isActive ? 'pro' : 'free',
-        expiresAt: entitlement?.expirationDate ?? allEntitlements?.expirationDate ?? null,
-        renewsAutomatically: entitlement?.willRenew ?? false,
-        productIdentifier: entitlement?.productIdentifier ?? null,
-        isExpired,
-      };
-    } catch (error) {
-      console.warn('[RevenueCat] getSubscriptionDetails error:', error);
-      return {
-        isActive: false,
-        tier: 'free',
-        expiresAt: null,
-        renewsAutomatically: false,
-        productIdentifier: null,
-        isExpired: false,
-      };
     }
   },
 
@@ -383,47 +328,6 @@ export const revenueCatService = {
   },
 
   /**
-   * Get subscription expiration date
-   */
-  getExpirationDate: async (): Promise<string | null> => {
-    if (!isRevenueCatConfigured) return null;
-
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[REVENUECAT.ENTITLEMENT_PRO];
-      return entitlement?.expirationDate ?? null;
-    } catch (error) {
-      console.warn('[RevenueCat] getExpirationDate error:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Check if subscription is about to expire (within 7 days)
-   */
-  isSubscriptionExpiringSoon: async (): Promise<boolean> => {
-    if (!isRevenueCatConfigured) return false;
-
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[REVENUECAT.ENTITLEMENT_PRO];
-      
-      if (!entitlement?.expirationDate || entitlement.willRenew) {
-        return false;
-      }
-
-      const expirationDate = new Date(entitlement.expirationDate);
-      const now = new Date();
-      const daysUntilExpiry = (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-      
-      return daysUntilExpiry <= 7 && daysUntilExpiry > 0;
-    } catch (error) {
-      console.warn('[RevenueCat] isSubscriptionExpiringSoon error:', error);
-      return false;
-    }
-  },
-
-  /**
    * Present RevenueCat Paywall UI
    */
   presentPaywall: async (): Promise<{ customerInfo: CustomerInfo | null; purchaseMade: boolean }> => {
@@ -572,22 +476,6 @@ export const revenueCatService = {
     } catch (error) {
       console.warn('[RevenueCat] getManagementURL error:', error);
       return null;
-    }
-  },
-
-  /**
-   * Check if there's an active subscription that can be cancelled
-   */
-  canCancelSubscription: async (): Promise<boolean> => {
-    if (!isRevenueCatConfigured) return false;
-
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[REVENUECAT.ENTITLEMENT_PRO];
-      return !!entitlement && entitlement.willRenew;
-    } catch (error) {
-      console.warn('[RevenueCat] canCancelSubscription error:', error);
-      return false;
     }
   },
 };

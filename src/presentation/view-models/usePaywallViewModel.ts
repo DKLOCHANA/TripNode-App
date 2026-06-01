@@ -10,6 +10,7 @@ import { checkNetworkAndAlert } from '@/lib/network';
 import { revenueCatService } from '@/services/revenueCatService';
 import { queryKeys } from '@/lib/queryKeys';
 import { recordFirstPurchase } from '@/data/sources/local/purchaseStorage';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 
 type PlanType = 'annual' | 'monthly';
 
@@ -24,12 +25,30 @@ interface PackageInfo {
 const FALLBACK_ANNUAL_PRICE = '$59.99';
 const FALLBACK_ANNUAL_PER_MONTH = '$5.00';
 const FALLBACK_MONTHLY_PRICE = '$9.99';
+const FALLBACK_ANNUAL_NUM = 59.99;
+const FALLBACK_MONTHLY_NUM = 9.99;
+
+// The annual plan includes a 3-day free trial (monthly does not).
+const FREE_TRIAL_DAYS = 3;
+
+/** Re-format an amount using the currency symbol/position of a sample price
+ *  string (e.g. template "$9.99" + 119.88 → "$119.88"). */
+function formatLikePrice(template: string, amount: number): string {
+  const formatted = amount.toFixed(2);
+  const match = template.match(/[\d.,]+/);
+  return match ? template.replace(match[0], formatted) : `$${formatted}`;
+}
 
 export function usePaywallViewModel() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const haptic = useHaptic();
+
+  // When the hard paywall is shown because a previously-purchased subscription
+  // lapsed (vs. a brand-new user), surface an "expired" notice so the screen
+  // explains why access was removed.
+  const subscription = useSubscriptionStatus();
 
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual');
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -195,15 +214,29 @@ export function usePaywallViewModel() {
     });
   }, []);
 
+  // Savings vs. paying monthly for a year, and the equivalent "would-be" yearly
+  // price to strike through. Computed from real package prices when available.
+  const annualNum = packages.annual?.package.product.price ?? FALLBACK_ANNUAL_NUM;
+  const monthlyNum = packages.monthly?.package.product.price ?? FALLBACK_MONTHLY_NUM;
+  const monthlyTemplate = packages.monthly?.price ?? FALLBACK_MONTHLY_PRICE;
+
+  const annualSavingsPercent =
+    monthlyNum > 0 ? Math.max(0, Math.round((1 - annualNum / (monthlyNum * 12)) * 100)) : null;
+  const annualOriginalPrice = formatLikePrice(monthlyTemplate, monthlyNum * 12);
+
   return {
     selectedPlan,
     isPurchasing,
     isRestoring,
     isLoadingPackages,
+    isExpired: subscription.isExpired,
     packages,
     annualPrice: packages.annual?.price ?? FALLBACK_ANNUAL_PRICE,
     annualPricePerMonth: packages.annual?.pricePerMonth ?? FALLBACK_ANNUAL_PER_MONTH,
     monthlyPrice: packages.monthly?.price ?? FALLBACK_MONTHLY_PRICE,
+    annualSavingsPercent,
+    annualOriginalPrice,
+    freeTrialDays: FREE_TRIAL_DAYS,
     handleSelectPlan,
     handlePurchase,
     handleRestorePurchases,

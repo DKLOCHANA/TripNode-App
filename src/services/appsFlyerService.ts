@@ -1,4 +1,3 @@
-import appsFlyer from 'react-native-appsflyer';
 import { Platform } from 'react-native';
 import {
   requestTrackingPermissionsAsync,
@@ -9,6 +8,24 @@ import { APPSFLYER } from '@/lib/constants';
 import { shouldEnableAppsFlyer } from '@/lib/environment';
 
 type RegistrationMethod = 'email' | 'apple';
+
+/**
+ * `react-native-appsflyer` constructs a `NativeEventEmitter` at module-load
+ * time *without* null-checking the native module, so a static top-level import
+ * throws in Expo Go where the native module is absent. We therefore load it
+ * lazily and only ever reach `getNativeAppsFlyer()` from code paths that are
+ * already gated behind `shouldEnableAppsFlyer()` / `isInitialized` — both false
+ * in Expo Go — so the native module is never required there. Behaviour in
+ * dev/production builds is unchanged.
+ */
+let nativeAppsFlyer: typeof import('react-native-appsflyer').default | null = null;
+function getNativeAppsFlyer() {
+  if (!nativeAppsFlyer) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    nativeAppsFlyer = require('react-native-appsflyer').default;
+  }
+  return nativeAppsFlyer!;
+}
 
 let isInitialized = false;
 
@@ -36,7 +53,7 @@ export const appsFlyerService = {
     }
 
     try {
-      await appsFlyer.initSdk({
+      await getNativeAppsFlyer().initSdk({
         devKey: APPSFLYER.DEV_KEY,
         isDebug: __DEV__,
         appId: APPSFLYER.APP_ID,
@@ -112,7 +129,7 @@ export const appsFlyerService = {
     if (!isInitialized) return Promise.resolve(null);
 
     return new Promise((resolve) => {
-      appsFlyer.getAppsFlyerUID((error, uid) => {
+      getNativeAppsFlyer().getAppsFlyerUID((error, uid) => {
         if (error) {
           console.error('[AppsFlyer] Failed to get AppsFlyer UID:', error);
           resolve(null);
@@ -131,7 +148,7 @@ export const appsFlyerService = {
     if (!isInitialized) return;
 
     try {
-      appsFlyer.setCustomerUserId(userId);
+      getNativeAppsFlyer().setCustomerUserId(userId);
 
       if (__DEV__) {
         console.log('[AppsFlyer] Customer user ID set:', userId);
@@ -153,7 +170,7 @@ export const appsFlyerService = {
     }
 
     try {
-      appsFlyer.logEvent('af_complete_registration', {
+      getNativeAppsFlyer().logEvent('af_complete_registration', {
         af_registration_method: method,
       });
 
@@ -172,7 +189,7 @@ export const appsFlyerService = {
     if (!isInitialized) return;
 
     try {
-      appsFlyer.logEvent(eventName, eventValues);
+      getNativeAppsFlyer().logEvent(eventName, eventValues);
 
       if (__DEV__) {
         console.log('[AppsFlyer] Event logged:', eventName, eventValues);

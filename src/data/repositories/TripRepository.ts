@@ -10,9 +10,11 @@ import type { Itinerary } from '@/domain/entities/Itinerary';
 
 const TRIPS_STORAGE_KEY = 'tripnode_trips_v1';
 const PHOTO_CACHE_KEY = 'tripnode_photo_cache_v1';
+const RATING_CACHE_KEY = 'tripnode_rating_cache_v1';
 
 type TripsStore = Record<string, Itinerary[]>;
 type PhotoCache = Record<string, string>;
+type RatingCache = Record<string, number>;
 
 /**
  * Read trips store from local storage
@@ -164,6 +166,35 @@ export async function setCachedPhoto(searchQuery: string, photoUri: string): Pro
 
   cache[searchQuery] = photoUri;
   await AsyncStorageService.setItem(PHOTO_CACHE_KEY, JSON.stringify(cache));
+}
+
+// Rating cache functions (Google Places ratings, persisted to avoid re-fetching)
+export async function getCachedRating(searchQuery: string): Promise<number | null> {
+  const raw = await AsyncStorageService.getItem(RATING_CACHE_KEY);
+  if (!raw) return null;
+
+  try {
+    const cache = JSON.parse(raw) as RatingCache;
+    return cache[searchQuery] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setCachedRating(searchQuery: string, rating: number): Promise<void> {
+  let cache: RatingCache = {};
+
+  const raw = await AsyncStorageService.getItem(RATING_CACHE_KEY);
+  if (raw) {
+    try {
+      cache = JSON.parse(raw) as RatingCache;
+    } catch {
+      cache = {};
+    }
+  }
+
+  cache[searchQuery] = rating;
+  await AsyncStorageService.setItem(RATING_CACHE_KEY, JSON.stringify(cache));
 }
 
 // Export singleton instance for convenience

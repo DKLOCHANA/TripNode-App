@@ -29,6 +29,34 @@ export function formatActivityTime(
 }
 
 /**
+ * 24-hour clock time in the destination timezone, no leading zero.
+ * @example formatClockTime('...T08:00:00Z', tz) // → "8:00"
+ */
+export function formatClockTime(utcIso: string, ianaTimezone: string): string {
+  return formatInTimeZone(new Date(utcIso), ianaTimezone, 'H:mm');
+}
+
+/**
+ * Hour-of-day (0–23) in the destination timezone — used to bucket activities
+ * into morning / afternoon / evening segments.
+ */
+export function getDestinationHour(utcIso: string, ianaTimezone: string): number {
+  return parseInt(formatInTimeZone(new Date(utcIso), ianaTimezone, 'H'), 10);
+}
+
+/**
+ * Compact duration label.
+ * @example 180 → "3h", 90 → "1h 30m", 45 → "45m"
+ */
+export function formatDurationShort(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours && mins) return `${hours}h ${mins}m`;
+  if (hours) return `${hours}h`;
+  return `${mins}m`;
+}
+
+/**
  * Format a date range summary string.
  * @example "Jun 1 – Jun 5" (in destination timezone)
  */
