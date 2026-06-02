@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/presentation/components/ui/Typography';
@@ -137,7 +136,6 @@ export function ProfileScreen() {
   const vm = useProfileViewModel();
   const notifications = useNotifications();
   const { colors, isDark, toggleTheme } = useTheme();
-  const router = useRouter(); // TEMP: paywall test button
 
   const scrollContentStyle = [
     styles.scrollContent,
@@ -286,16 +284,6 @@ export function ProfileScreen() {
           <LinkRow icon="document-text" label="Terms of Service" onPress={vm.handleTermsOfService} />
           <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
           <LinkRow icon="help-circle" label="Help & Support" onPress={vm.handleHelpSupport} />
-        </View>
-
-        {/* TEMP: paywall test button — remove before release */}
-        <View style={styles.actionsSection}>
-          <Button
-            title="Open Paywall (TEMP)"
-            variant="secondary"
-            onPress={() => router.push('/paywall')}
-            icon={<Ionicons name="card-outline" size={18} color={colors.textPrimary} />}
-          />
         </View>
 
         {/* Account actions */}
